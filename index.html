@@ -1,0 +1,1171 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>成語大師 (精選成語版)</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <style>
+        /* 基礎設定 */
+        body { 
+            font-family: "Noto Sans TC", "Microsoft JhengHei", system-ui, sans-serif; 
+            -webkit-font-smoothing: antialiased;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+        
+        /* 捲軸美化 */
+        ::-webkit-scrollbar { width: 10px; }
+        ::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.5); }
+        ::-webkit-scrollbar-thumb { background: #d4c4a8; border-radius: 5px; }
+        ::-webkit-scrollbar-thumb:hover { background: #b09b7c; }
+        
+        /* 動畫定義 */
+        @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+        .animate-pop { animation: pop 0.3s ease-in-out; }
+        
+        @keyframes fade-in-up { 
+            0% { opacity: 0; transform: translateY(20px); } 
+            100% { opacity: 1; transform: translateY(0); } 
+        }
+        .animate-fade-in-up { animation: fade-in-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        .animate-shake { animation: shake 0.4s ease-in-out; }
+        
+        /* 圖片容器互動 */
+        .group-img:hover img { transform: scale(1.08); }
+        
+        /* 禁止選取文字 (用於按鈕) */
+        .no-select { user-select: none; -webkit-user-select: none; }
+
+        /* 表格響應式優化 */
+        .table-container {
+            overflow-x: auto;
+        }
+        .prose-table td, .prose-table th {
+            white-space: pre-wrap; /* 允許文字換行 */
+            min-width: 120px;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo, useRef } = React;
+        const ITEMS_PER_PAGE = 15; // 依照要求改為每頁 15 個
+
+        // --- 完整成語資料庫 (1-174) ---
+        const IDIOM_DATA = [
+            { id: 1, term: "飲水思源", definition: "喝水時想到水的來源。比喻不忘本，感激別人的恩德。", sentence1: "做人要飲水思源，對於曾經幫助過我們的人，絕對不能忘恩負義。", sentence2: "校慶時，傑出校友們紛紛回校捐款，展現了飲水思源的精神。", scene: "喝水時想到水源，比喻不忘本。" },
+            { id: 2, term: "杯水車薪", definition: "用一杯水去救一車著了火的柴草。比喻力量太小，無濟於事。", sentence1: "對於這龐大的債務來說，這點錢不過是杯水車薪，解決不了問題。", sentence2: "乾旱如此嚴重，這場小雨簡直是杯水車薪，無法解除缺水危機。", scene: "一杯水救一車火，力量太小。" },
+            { id: 3, term: "背水一戰", definition: "比喻抱著必死的決心，奮戰取勝。", sentence1: "面對強敵，球隊決定背水一戰，希望能爭取最後的晉級機會。", sentence2: "這次考試是我最後的機會，我必須背水一戰，全力以赴。", scene: "背對河流作戰，比喻決一死戰。" },
+            { id: 4, term: "水到渠成", definition: "水流到的地方自然成渠。比喻事情條件完備則自然成功，不須強求。", sentence1: "只要你平時努力累積實力，成功之日自然水到渠成。", sentence2: "這項合作案雙方都有意願，簽約的事應該是水到渠成了。", scene: "水流到，溝渠成，比喻條件成熟。" },
+            { id: 5, term: "水漲船高", definition: "比喻人或事物，隨著憑藉者的地位提升而升高。", sentence1: "隨著這位畫家的名氣越來越大，他的畫作價格也跟著水漲船高。", sentence2: "公司獲利創新高，員工的年終獎金自然也水漲船高。", scene: "水位漲船也高，比喻地位隨之提升。" },
+            { id: 6, term: "順水推舟", definition: "順著水流推船。比喻順應情勢行事。", sentence1: "既然大家都推舉他當隊長，我就順水推舟投他一票吧。", sentence2: "他看對方有意和解，便順水推舟地接受了道歉，化解了這場紛爭。", scene: "順著水流推船，比喻順勢行事。" },
+            { id: 7, term: "車水馬龍", definition: "形容車馬絡繹不絕，繁華熱鬧的景象。", sentence1: "假日的信義區車水馬龍，到處都是逛街的人潮。", sentence2: "這條街道每到下班時間就車水馬龍，交通非常擁擠。", scene: "形容車馬往來繁華熱鬧。" },
+            { id: 8, term: "川流不息", definition: "形容連綿不絕，往返不斷。", sentence1: "連續假期時，高速公路上的車輛川流不息。", sentence2: "百貨公司週年慶，採購的人潮川流不息，非常熱鬧。", scene: "像河水流動一樣連續不斷。" },
+            { id: 9, term: "滴水穿石", definition: "滴水久了可使石穿。比喻有志者事竟成，只要努力不懈就能夠成功。", sentence1: "學習語言需要滴水穿石的毅力，不能指望一步登天。", sentence2: "只要有滴水穿石的精神，再困難的任務也能完成。", scene: "水滴久了穿石，比喻堅持不懈。" },
+            { id: 10, term: "開源節流", definition: "比喻開發財源，節省支出，以儲蓄財力。", sentence1: "理財的第一步就是要懂得開源節流，才能累積財富。", sentence2: "公司為了度過景氣寒冬，實施了一系列開源節流的政策。", scene: "開發財源，節省支出。" },
+            { id: 11, term: "涇渭分明", definition: "涇河與渭河的清濁清晰可辨。比喻是非好壞區別得非常清楚。", sentence1: "他的個性剛正，對於是非善惡總是涇渭分明，絕不含糊。", sentence2: "這兩派人馬的立場涇渭分明，很難達成共識。", scene: "界限清楚，比喻是非分明。" },
+            { id: 12, term: "投鞭斷流", definition: "形容軍隊眾多，兵力強大。", sentence1: "敵軍號稱百萬，有投鞭斷流之勢，我們不可輕敵。", sentence2: "歷史上許多投鞭斷流的大軍，最後卻因驕傲輕敵而戰敗。", scene: "兵馬眾多，比喻軍力強大。" },
+            { id: 13, term: "水中撈月", definition: "到水中去撈月亮。比喻徒勞無功。", sentence1: "你不想付出努力卻想成功，簡直是水中撈月。", sentence2: "這種不切實際的計畫，執行起來無異於水中撈月，注定失敗。", scene: "水裡撈月亮，比喻徒勞無功。" },
+            { id: 14, term: "上善若水", definition: "最高境界的善行就像水的品性一樣，澤被萬物而不爭名利。", sentence1: "老子主張上善若水，教導我們要學習水謙下、不爭的德行。", sentence2: "為人處世若能做到上善若水，自然能與人和諧相處。", scene: "最高的美德像水一樣澤被萬物。" },
+            { id: 15, term: "水乳交融", definition: "比喻彼此關係密切，投合無間。", sentence1: "他們兩人的感情水乳交融，是大家公認的模範夫妻。", sentence2: "經過這次的合作，這兩個部門的關係變得水乳交融，不再有隔閡。", scene: "像水和奶融合，比喻關係親密。" },
+            { id: 16, term: "鏡花水月", definition: "鏡中的花，水裡的月。比喻虛幻不實的景象。", sentence1: "榮華富貴不過是鏡花水月，轉眼成空，不必過於執著。", sentence2: "電影裡的情節再美好，終究是鏡花水月，我們還是要面對現實生活。", scene: "鏡中花水中月，比喻虛幻景象。" },
+            { id: 17, term: "積水成淵", definition: "比喻積小成大。", sentence1: "凡事積水成淵，不要小看每一個小的力量。", sentence2: "每天存一點錢，積水成淵，將來也能累積成一筆可觀的財富。", scene: "點滴積累成深淵，比喻積少成多。" },
+            { id: 18, term: "出水芙蓉", definition: "形容文章清新可愛或女子嬌柔清麗。", sentence1: "她的容貌出色，猶如出水芙蓉般動人。", sentence2: "這篇散文清新自然，讀來有如出水芙蓉，令人心曠神怡。", scene: "荷花出水，比喻女子美麗清新。" },
+            { id: 19, term: "水深火熱", definition: "比喻處境非常艱困、痛苦。", sentence1: "戰亂地區的人民生活在水深火熱之中，急需國際援助。", sentence2: "這裡的治安敗壞，居民生活水深火熱，苦不堪言。", scene: "處境像在深水熱火中，極其痛苦。" },
+            { id: 20, term: "水火不容", definition: "比喻彼此對立，無法相容。", sentence1: "他們兩人的個性水火不容，見面總是吵架。", sentence2: "這兩個觀點水火不容，很難在同一個計畫中並存。", scene: "水火相剋，比喻彼此對立。" },
+            { id: 21, term: "呼風喚雨", definition: "比喻神通廣大，影響力極強。", sentence1: "他在商界呼風喚雨，是位舉足輕重的人物。", sentence2: "傳說中的神仙能呼風喚雨，解救蒼生於乾旱之中。", scene: "神通廣大，比喻勢力強大。" },
+            { id: 22, term: "風調雨順", definition: "指氣候調和，適合農作物生長。", sentence1: "農民們虔誠祈禱，希望今年能風調雨順，五穀豐收。", sentence2: "只有風調雨順，國家才能安定，人民才能富足。", scene: "風雨適時，預示農年豐收。" },
+            { id: 23, term: "波瀾不興", definition: "水面平靜，不起波浪。比喻局面平靜或心情平和。", sentence1: "湖面波瀾不興，倒映著藍天白雲，美不勝收。", sentence2: "經歷大風大浪後，他的心境已是波瀾不興，看淡一切。", scene: "水面平靜，比喻局面安定。" },
+            { id: 24, term: "斗升之水", definition: "比喻微薄的資助。", sentence1: "對於受災戶來說，即使是斗升之水的援助，也是莫大的恩惠。", sentence2: "這筆錢雖然只是斗升之水，希望能解你的燃眉之急。", scene: "極少量的水，比喻微薄資助。" },
+            { id: 25, term: "鼴鼠飲河", definition: "比喻所求不多，夠用就好。（出自莊子）", sentence1: "我的欲望不大，如鼴鼠飲河，不過滿腹，知足常樂。", sentence2: "他對物質生活的要求就像鼴鼠飲河，只求溫飽即可。", scene: "喝得少，比喻所求不多。" },
+            { id: 26, term: "如人飲水，冷暖自知", definition: "泛指自己經歷的事，自己最清楚。", sentence1: "婚姻生活如人飲水，冷暖自知，外人很難評論。", sentence2: "創業的艱辛如人飲水，冷暖自知，只有親身經歷過的人才能體會。", scene: "像喝水一樣，冷暖自己知道。" },
+            { id: 27, term: "正本清源", definition: "從根本、源頭上清理整頓。指澈底解決問題。", sentence1: "解決社會問題要正本清源，從教育著手。", sentence2: "治病要正本清源，找出病因才能對症下藥。", scene: "從源頭清理，比喻徹底解決。" },
+            { id: 28, term: "山窮水盡", definition: "比喻陷於絕境，窮困之至。", sentence1: "他散盡家產，已到了山窮水盡的地步。", sentence2: "在這山窮水盡的時刻，幸好有朋友伸出援手。", scene: "無路可走，比喻陷入絕境。" },
+            { id: 29, term: "柳暗花明", definition: "比喻在絕望中產生轉機。", sentence1: "不要輕言放棄，堅持下去就會柳暗花明。", sentence2: "本以為沒希望了，沒想到柳暗花明，又出現了新的轉機。", scene: "絕處逢生，忽現轉機。" },
+            { id: 30, term: "樂山樂水", definition: "比喻各人性情動靜不同。（仁者樂山，智者樂水）", sentence1: "這裡環境清幽，適合樂山樂水的隱士居住。", sentence2: "週末我們喜歡去郊外踏青，享受樂山樂水的樂趣。", scene: "喜愛山水自然，比喻性情高雅。" },
+            { id: 31, term: "水洩不通", definition: "形容擁擠不堪。", sentence1: "燈會現場人潮洶湧，擠得水洩不通。", sentence2: "跨年夜的廣場被群眾擠得水洩不通，寸步難行。", scene: "擁擠得連水都流不出去。" },
+            { id: 32, term: "水能載舟，亦能覆舟", definition: "水能載船也能翻船。比喻事物有利有害，或民意可擁戴也可推翻統治者。", sentence1: "網路科技水能載舟，亦能覆舟，我們使用時要格外謹慎。", sentence2: "輿論的力量水能載舟，亦能覆舟，公眾人物應謹言慎行。", scene: "水能載船也能翻船，比喻民意。" },
+            { id: 33, term: "原清則流清，原濁則流濁", definition: "源頭清流出的水就清，源頭濁流出的水就濁。比喻事物的結果取決於開端。", sentence1: "教育是百年大計，原清則流清，原濁則流濁，基礎教育至關重要。", sentence2: "原清則流清，原濁則流濁，領導者的品德會影響整個團隊的風氣。", scene: "源頭清流就清，比喻上行下效。" },
+            { id: 34, term: "虎不怕山高，魚不怕水深", definition: "比喻在熟悉的領域裡不擔心接受挑戰。", sentence1: "所謂虎不怕山高，魚不怕水深，只要有實力，就不怕困難挑戰。", sentence2: "他在這個行業經驗豐富，正如虎不怕山高，魚不怕水深，任何難題都難不倒他。", scene: "憑藉本領，不畏困難環境。" },
+            { id: 35, term: "水至清則無魚", definition: "水太清則魚無法生存。比喻對人或事不能過於苛察，求全責備。", sentence1: "待人處事要寬容，水至清則無魚，太過挑剔反而沒朋友。", sentence2: "管理部屬若太過嚴苛，水至清則無魚，反而會流失人才。", scene: "水太清沒魚，比喻過於苛求無友。" },
+            { id: 36, term: "木無本必枯，水無源必竭", definition: "比喻沒有根本和源泉，就不能生存。", sentence1: "文化傳承很重要，木無本必枯，水無源必竭，我們不能忘本。", sentence2: "企業若沒有核心技術，就像木無本必枯，水無源必竭，難以長久經營。", scene: "沒根必枯，沒源必乾，比喻根本。" },
+            { id: 37, term: "田螺含水過冬", definition: "比喻窮人忍苦度日，等待時機。（閩南諺語）", sentence1: "為了還債，他只能像田螺含水過冬一樣，咬牙苦撐。", sentence2: "在景氣寒冬中，許多小店家都在田螺含水過冬，期盼春天到來。", scene: "比喻忍耐困境，等待時機。" },
+            { id: 38, term: "要想知河水深淺，需問過來人", definition: "比喻想了解情況，要請教有經驗的人。", sentence1: "創業前最好請教前輩，畢竟要想知河水深淺，需問過來人。", sentence2: "要想知河水深淺，需問過來人，多聽取專家的意見可以少走冤枉路。", scene: "想知深淺要問有經驗的人。" },
+            { id: 39, term: "老牛舐犢", definition: "老牛舔小牛。比喻父母疼愛子女之情深切。", sentence1: "父親為了孩子犧牲奉獻，這種老牛舐犢之情令人動容。", sentence2: "看著他為生病的孩子忙進忙出，盡顯老牛舐犢的深情。", scene: "老牛舔小牛，比喻父母愛子。" },
+            { id: 40, term: "鶼鰈情深", definition: "比喻夫婦愛情深厚，相處融洽。", sentence1: "王爺爺與王奶奶結婚五十年，依然鶼鰈情深，羨煞旁人。", sentence2: "他們夫妻倆鶼鰈情深，總是形影不離地出席各種場合。", scene: "比喻夫妻感情深厚。" },
+            { id: 41, term: "舉案齊眉", definition: "比喻夫妻相敬如賓。", sentence1: "古代人講究舉案齊眉，現代夫妻則更重視平等與溝通。", sentence2: "他們結婚多年，始終舉案齊眉，從未紅過臉吵過架。", scene: "夫妻互敬互愛。" },
+            { id: 42, term: "讓棗推梨", definition: "比喻兄弟間友愛，不計較財物。", sentence1: "兄弟之間應當讓棗推梨，互相扶持，不要為了家產傷了和氣。", sentence2: "他們兄弟倆讓棗推梨的故事，在鄰里間傳為佳話。", scene: "小孩互相禮讓，比喻兄弟友愛。" },
+            { id: 43, term: "同氣連枝", definition: "比喻兄弟姊妹血緣關係密切。", sentence1: "我們是同氣連枝的親兄弟，你的困難就是我的困難。", sentence2: "既然是同氣連枝的手足，就應該團結一致，共同面對家族危機。", scene: "比喻兄弟血緣親密。" },
+            { id: 44, term: "契若金蘭", definition: "形容朋友情意相投合，如兄弟一般。", sentence1: "我和他是契若金蘭的好友，從小一起長大，無話不談。", sentence2: "這幾位契若金蘭的戰友，退伍後依然保持密切聯繫。", scene: "朋友情意像金石般堅固。" },
+            { id: 45, term: "父慈子孝", definition: "父親慈愛，子女孝順。形容家庭和樂。", sentence1: "這個家庭父慈子孝，鄰居們都很羨慕。", sentence2: "父慈子孝是傳統社會中理想的家庭倫理關係。", scene: "父母慈愛，子女孝順。" },
+            { id: 46, term: "骨肉至親", definition: "比喻關係最密切的親人。", sentence1: "為了爭奪遺產，竟然連骨肉至親都反目成仇，真是令人感嘆。", sentence2: "他們雖然分隔兩地，但骨肉至親的感情依然深厚。", scene: "比喻有血緣關係的親人。" },
+            { id: 47, term: "視如珍寶", definition: "形容非常珍惜。", sentence1: "他將這本絕版書視如珍寶，不輕易借人翻閱。", sentence2: "父母將孩子視如珍寶，總是給予最好的照顧。", scene: "看作無價寶物般珍惜。" },
+            { id: 48, term: "一見傾心", definition: "初次見面就產生愛慕之情。", sentence1: "他對那位女孩一見傾心，決定展開熱烈追求。", sentence2: "這幅畫作讓人一見傾心，忍不住想要收藏。", scene: "初次見面就心動愛慕。" },
+            { id: 49, term: "日久生情", definition: "相處久了而產生感情。", sentence1: "他們兩人是從好朋友做起，日久生情，最後步入禮堂。", sentence2: "男女主角在劇中朝夕相處，日久生情，譜出一段浪漫戀曲。", scene: "相處久了產生感情。" },
+            { id: 50, term: "怒不可遏", definition: "憤怒到無法抑制的地步。", sentence1: "聽到被好友背叛的消息，他怒不可遏，大聲咆哮。", sentence2: "對於這種不公不義的事情，群眾感到怒不可遏，紛紛上街抗議。", scene: "憤怒到無法抑制。" },
+            { id: 51, term: "心悅誠服", definition: "內心喜悅而真誠服從。", sentence1: "他的領導能力卓越，讓所有員工都心悅誠服。", sentence2: "這番道理說得透徹，讓人聽了心悅誠服，不再有異議。", scene: "真心誠意地服氣。" },
+            { id: 52, term: "前倨後恭", definition: "以前傲慢，後來恭敬。形容對人態度改變前後不一（多指勢利）。", sentence1: "發現對方的身分後，他的態度前倨後恭，判若兩人。", sentence2: "做人要有一致的標準，不要看人低，以免落得前倨後恭的笑話。", scene: "先傲慢後恭敬，勢利眼。" },
+            { id: 53, term: "紛至沓來", definition: "形容接連不斷地到來。", sentence1: "新產品上市後，訂單紛至沓來，工廠忙得不可開交。", sentence2: "好消息紛至沓來，讓大家都沉浸在喜悅之中。", scene: "形容接連不斷地到來。" },
+            { id: 54, term: "蜂擁而上", definition: "形容許多人一起湧上前。", sentence1: "商店一開門，搶購的人潮便蜂擁而上。", sentence2: "記者們見到明星出現，立刻蜂擁而上，爭相採訪。", scene: "像蜂群一樣擁擠衝上。" },
+            { id: 55, term: "禮輕情意重", definition: "禮物雖輕，情意卻深厚。", sentence1: "這張卡片雖不值錢，但禮輕情意重，代表著我滿滿的祝福。", sentence2: "千里送鵝毛，禮輕情意重，你的心意我收到了。", scene: "禮物雖輕，情意深重。" },
+            { id: 56, term: "孺慕之情", definition: "指幼童愛慕父母的摯情。", sentence1: "孩子對父母那種純真的孺慕之情，是最珍貴的情感。", sentence2: "他雖然長大成人，但對母親的孺慕之情絲毫未減。", scene: "幼童愛慕父母之情。" },
+            { id: 57, term: "舐犢情深", definition: "比喻父母疼愛子女之情深切。（同老牛舐犢）", sentence1: "舐犢情深，天下父母心都是一樣的。", sentence2: "這張照片拍下了母獅保護幼獅的畫面，舐犢情深，令人動容。", scene: "比喻父母對子女深切的愛。" },
+            { id: 58, term: "十嘴九屁股", definition: "比喻人多意見紛歧。（閩南諺語）", sentence1: "開會時大家七嘴八舌，十嘴九屁股，根本討論不出結果。", sentence2: "這件事參與的人太多，十嘴九屁股，反而讓事情更複雜。", scene: "人多嘴雜，意見混亂。" },
+            { id: 59, term: "月是故鄉圓", definition: "故鄉的一切都比別處好。形容思鄉之情。", sentence1: "獨在異鄉為異客，中秋夜看著月亮，不禁感嘆月是故鄉圓。", sentence2: "遊子在外打拼多年，心中始終覺得月是故鄉圓。", scene: "覺得故鄉的一切都比較好。" },
+            { id: 60, term: "敬天惜物", definition: "敬畏天道，愛惜物資。", sentence1: "原住民族敬天惜物的精神，值得現代社會學習與效法。", sentence2: "爺爺從小教導我們要敬天惜物，一粒米飯都不能浪費。", scene: "敬畏上天，珍惜物品。" },
+            { id: 61, term: "暴殄天物", definition: "比喻糟蹋物力，不知珍惜。", sentence1: "這麼好的食材卻被你煮壞了，真是暴殄天物！", sentence2: "隨意丟棄還能使用的家具，簡直是暴殄天物的行為。", scene: "任意糟蹋珍貴物品。" },
+            { id: 62, term: "揮金如土", definition: "花錢像撒土一樣。比喻極端浪費錢財。", sentence1: "他中了樂透後便揮金如土，沒幾年就將獎金花光了。", sentence2: "這種揮金如土的生活方式，不是一般受薪階級負擔得起的。", scene: "花錢像撒土一樣浪費。" },
+            { id: 63, term: "節衣縮食", definition: "省吃儉用，生活節儉。", sentence1: "為了供孩子出國留學，父母節衣縮食，從不喊苦。", sentence2: "在這段經濟不景氣的時期，許多家庭都過著節衣縮食的日子。", scene: "省吃儉用，度日節儉。" },
+            { id: 64, term: "愛惜羽毛", definition: "比喻自重、愛惜自己的聲譽。", sentence1: "他是一位愛惜羽毛的政治家，絕不參與任何非法的勾當。", sentence2: "身為公眾人物，應該更愛惜羽毛，謹言慎行。", scene: "比喻珍惜自己的名聲。" },
+            { id: 65, term: "隨波逐流", definition: "比喻沒有堅定的立場，缺乏判斷力，只能隨著別人行事。", sentence1: "我們要有自己的主見，不應隨波逐流，人云亦云。", sentence2: "在這個資訊爆炸的時代，保持獨立思考才不會隨波逐流。", scene: "跟隨潮流，沒有主見。" },
+            { id: 66, term: "故步自封", definition: "比喻安於現狀，不求進取。", sentence1: "做學問要不斷創新，不能故步自封，否則會被時代淘汰。", sentence2: "企業若故步自封，拒絕改革，很快就會失去競爭力。", scene: "守舊不求進步。" },
+            { id: 67, term: "患得患失", definition: "形容人的得失心很重，憂慮不安。", sentence1: "考試前不要患得患失，只要盡力準備就好。", sentence2: "他因為太過患得患失，反而無法在比賽中發揮正常的實力。", scene: "憂慮得失，心情焦慮。" },
+            { id: 68, term: "克盡厥職", definition: "能夠忠於職守，做好其職務分內的事。", sentence1: "李警官在職期間克盡厥職，深受長官與民眾的信賴。", sentence2: "無論擔任什麼職位，我們都應該克盡厥職，扮好自己的角色。", scene: "盡心盡力做好職責。" },
+            { id: 69, term: "大放厥詞", definition: "發表誇張的言詞。", sentence1: "他對這件事一知半解，卻在會議上大放厥詞，令人反感。", sentence2: "那些在網路上大放厥詞的人，往往不需要為自己的言論負責。", scene: "發表誇張荒謬的言論。" },
+            { id: 70, term: "後悔莫及", definition: "事後懊悔，已來不及了。", sentence1: "平時不努力，等到考試不及格才後悔莫及。", sentence2: "這種危險的動作千萬別做，否則一旦受傷將會後悔莫及。", scene: "事後懊悔也來不及了。" },
+            { id: 71, term: "取之不盡，用之不竭", definition: "形容資源豐富，用不完。", sentence1: "太陽能是取之不盡，用之不竭的再生能源。", sentence2: "大自然的智慧是取之不盡，用之不竭的寶庫。", scene: "資源豐富，用不完。" },
+            { id: 72, term: "不可磨滅", definition: "指事跡永遠流傳，無法消滅。", sentence1: "他對國家的貢獻不可磨滅，將永遠被後人銘記。", sentence2: "這段經歷在我心中留下了不可磨滅的印象。", scene: "永遠存在，無法消除。" },
+            { id: 73, term: "密不可分", definition: "形容關係非常密切，無法分離。", sentence1: "經濟發展與環境保護是密不可分的議題。", sentence2: "他們兩人是密不可分的工作夥伴，默契十足。", scene: "關係密切，無法分開。" },
+            { id: 74, term: "無庸置疑", definition: "不必懷疑，即非常確定的意思。", sentence1: "他的實力無庸置疑，這次冠軍非他莫屬。", sentence2: "這件事的真實性無庸置疑，因為有多位目擊證人。", scene: "事實明顯，不用懷疑。" },
+            { id: 75, term: "不置可否", definition: "不說對，也不說不對。指不表明態度。", sentence1: "對於這個提議，主管不置可否，只說再考慮看看。", sentence2: "他一臉高深莫測，對我的猜測不置可否。", scene: "不表示贊同也不反對。" },
+            { id: 76, term: "鋌而走險", definition: "在窮途末路或受逼迫時，採取冒險行動。", sentence1: "他因為欠下巨額賭債，不惜鋌而走險去搶銀行。", sentence2: "千萬不要為了貪圖一時的利益而鋌而走險，觸犯法律。", scene: "走投無路而冒險行事。" },
+            { id: 77, term: "死得其所", definition: "死得有意義、有價值。", sentence1: "為了保衛國家而犧牲，這位烈士可說是死得其所。", sentence2: "他將一生奉獻給教育，即使離世，也是死得其所。", scene: "死得有意義、有價值。" },
+            { id: 78, term: "流芳百世", definition: "美名永遠流傳後世。", sentence1: "他的義行善舉將流芳百世，為後人景仰。", sentence2: "岳飛精忠報國的精神流芳百世，至今仍被傳頌。", scene: "美名永遠流傳後世。" },
+            { id: 79, term: "不言而喻", definition: "不用說就可以明白。", sentence1: "父母對子女的愛是不言而喻的，無須多做解釋。", sentence2: "這次勝利的重要性不言而喻，大家都非常興奮。", scene: "道理明顯，不用說就懂。" },
+            { id: 80, term: "不告而別", definition: "沒有告辭就離開。", sentence1: "他因為心情不好，竟然不告而別，讓大家都很擔心。", sentence2: "這種不告而別的行為是非常不禮貌的。", scene: "沒有告別就離開。" },
+            { id: 81, term: "依然故我", definition: "仍舊和從前一樣。指情況沒有改變（多指缺點）。", sentence1: "儘管大家苦口婆心勸告，他還是依然故我，不願改過。", sentence2: "他那傲慢的個性依然故我，一點長進都沒有。", scene: "仍舊是老樣子，沒改變。" },
+            { id: 82, term: "良田萬頃，日食一升", definition: "比喻所求不多，不應貪求無度。", sentence1: "俗話說「良田萬頃，日食一升」，人要懂得知足，不要過度貪婪。", sentence2: "縱有家財萬貫，也是良田萬頃，日食一升，健康快樂才是最重要的。", scene: "財富雖多，實際需求有限。" },
+            { id: 83, term: "悠閒自在", definition: "閒暇舒適，無拘無束。", sentence1: "退休後，他過著悠閒自在的田園生活。", sentence2: "這裡的氣氛悠閒自在，非常適合度假。", scene: "閒適自得，無拘無束。" },
+            { id: 84, term: "年輕氣盛", definition: "年紀輕，血氣方剛。", sentence1: "他年輕氣盛，做事容易衝動，需要多磨練。", sentence2: "當年我們都年輕氣盛，不知天高地厚。", scene: "年輕人血氣方剛。" },
+            { id: 85, term: "共存共榮", definition: "共同存在，共同繁榮。", sentence1: "人類與大自然應該共存共榮，才能永續發展。", sentence2: "團隊成員之間要互相合作，共存共榮。", scene: "共同生存，共同繁榮。" },
+            { id: 86, term: "棄之可惜", definition: "丟掉它覺得可惜。", sentence1: "這件衣服雖然舊了，但質料很好，棄之可惜。", sentence2: "這個計畫雖然執行困難，但若現在放棄，實在棄之可惜。", scene: "丟掉覺得可惜。" },
+            { id: 87, term: "取用有節", definition: "取用物資有節制。", sentence1: "我們對地球資源要取用有節，為後代子孫著想。", sentence2: "只要取用有節，這些水資源足夠我們使用。", scene: "使用物資有節制。" },
+            { id: 88, term: "自尋煩惱", definition: "自己給自己找麻煩。", sentence1: "很多時候我們都是自尋煩惱，事情其實沒那麼嚴重。", sentence2: "別再自尋煩惱了，船到橋頭自然直。", scene: "自己給自己找麻煩。" },
+            { id: 89, term: "飽食終日", definition: "整天吃飽飯，不做事。", sentence1: "他整天飽食終日，無所事事，真是浪費生命。", sentence2: "這種飽食終日的生活，不是我想要的。", scene: "整天吃飽沒事做。" },
+            { id: 90, term: "知足心富", definition: "知道滿足，心靈就富足。", sentence1: "只要知足心富，粗茶淡飯也能吃得津津有味。", sentence2: "知足心富的人，往往比擁有萬貫家財的人更快樂。", scene: "知道滿足，心靈就富足。" },
+            { id: 91, term: "苦盡甘來", definition: "艱難的日子過了，美好的日子來到了。", sentence1: "經過多年的努力，他終於苦盡甘來，事業有成。", sentence2: "只要堅持下去，總有一天會苦盡甘來的。", scene: "吃苦結束，好運到來。" },
+            { id: 92, term: "財迷心竅", definition: "因貪財而使得心智昏亂。", sentence1: "他一時財迷心竅，竟然挪用公款。", sentence2: "別讓金錢蒙蔽了雙眼，財迷心竅只會讓你走上歧途。", scene: "貪財而失去理智。" },
+            { id: 93, term: "皇天不負苦心人", definition: "上天不會辜負肯吃苦努力的人。", sentence1: "皇天不負苦心人，他終於考上了理想的大學。", sentence2: "只要你肯努力，皇天不負苦心人，成功一定屬於你。", scene: "上天不辜負努力的人。" },
+            { id: 94, term: "食果子拜樹頭", definition: "比喻飲水思源，知恩圖報。（閩南諺語）", sentence1: "做人要懂食果子拜樹頭，感謝父母的養育之恩。", sentence2: "受人點滴當湧泉以報，這就是食果子拜樹頭的道理。", scene: "比喻飲水思源，知恩圖報。" },
+            { id: 95, term: "食米不知米價", definition: "比喻不切實際，不知民間疾苦。（閩南諺語）", sentence1: "這些富二代食米不知米價，隨便一餐就花掉普通人一個月的薪水。", sentence2: "為官者若食米不知米價，制定的政策就會脫離民意。", scene: "比喻不食人間煙火。" },
+            { id: 96, term: "聰明的人不會被同一塊石頭絆倒兩次", definition: "比喻要從錯誤中吸取教訓，不重蹈覆轍。", sentence1: "聰明的人不會被同一塊石頭絆倒兩次，你要記取這次的教訓。", sentence2: "犯錯沒關係，但聰明的人不會被同一塊石頭絆倒兩次。", scene: "吸取教訓，不重蹈覆轍。" },
+            { id: 97, term: "唯有滴下眉毛上的汗珠，才能撿起田中的麥穗", definition: "比喻要付出努力，才能有收穫。", sentence1: "天下沒有白吃的午餐，唯有滴下眉毛上的汗珠，才能撿起田中的麥穗。", sentence2: "想成功就要努力耕耘，唯有滴下眉毛上的汗珠，才能撿起田中的麥穗。", scene: "努力工作才有收穫。" },
+            { id: 98, term: "朱門酒肉臭，路有凍死骨", definition: "形容貧富差距極大。", sentence1: "社會上貧富不均，朱門酒肉臭，路有凍死骨的現象令人痛心。", sentence2: "這首詩深刻描寫了朱門酒肉臭，路有凍死骨的社會現實。", scene: "貧富差距極大的社會現象。" },
+            { id: 99, term: "循序漸進", definition: "按照一定的次序與步驟逐漸推進。", sentence1: "學習必須循序漸進，打好基礎才能學得扎實。", sentence2: "復健的過程要循序漸進，不能操之過急，以免造成二度傷害。", scene: "按照順序逐步前進。" },
+            { id: 100, term: "旁徵博引", definition: "發表見解時，廣泛引用材料，以作為證據。", sentence1: "他的論文旁徵博引，論證嚴謹，獲得教授們的一致好評。", sentence2: "這位演講者旁徵博引，將深奧的理論講得淺顯易懂。", scene: "廣泛引用材料作為依據。" },
+            { id: 101, term: "囫圇吞棗", definition: "把棗子整個吞下去，不加咀嚼。比喻理解事物籠統含糊，或為學不求甚解。", sentence1: "讀書不能囫圇吞棗，要細細品味其中的含意。", sentence2: "他對於這份報告的內容只是囫圇吞棗地看過，根本沒抓到重點。", scene: "讀書或做事不求甚解。" },
+            { id: 102, term: "走馬觀花", definition: "騎在馬上看花。形容觀察事物不深入，只是粗略地看看。", sentence1: "這次旅遊行程太趕，每個景點都只是走馬觀花，有點可惜。", sentence2: "做研究要深入探討，不能像走馬觀花一樣，只看表面。", scene: "粗略地觀察事物。" },
+            { id: 103, term: "未雨綢繆", definition: "鴟鴞在未下雨前，便已修補好窩巢。比喻事先預備，防患未然。", sentence1: "防颱工作要未雨綢繆，才能將災害降到最低。", sentence2: "為了退休後的生活，年輕時就應該未雨綢繆，做好理財規劃。", scene: "事先做好準備工作。" },
+            { id: 104, term: "杞人憂天", definition: "比喻缺乏根據且不必要的憂慮。", sentence1: "你擔心的這些事情發生的機率極低，簡直是杞人憂天。", sentence2: "別再杞人憂天了，船到橋頭自然直，問題總會解決的。", scene: "不必要的憂慮。" },
+            { id: 105, term: "濫竽充數", definition: "比喻沒有真才實學的人，混在行家裡面充數。", sentence1: "這次的樂團表演水準很高，絕對不允許有人濫竽充數。", sentence2: "我對這個領域並不熟悉，在專家面前就不敢濫竽充數發表意見了。", scene: "沒有真才實學混在行家中。" },
+            { id: 106, term: "一蹶不振", definition: "比喻遭受挫折或失敗後，無法再振作恢復。", sentence1: "失敗並不可怕，可怕的是從此一蹶不振，失去信心。", sentence2: "經歷了破產的打擊，他並沒有一蹶不振，反而更努力東山再起。", scene: "遭受挫折後無法振作。" },
+            { id: 107, term: "鑑往知來", definition: "觀察過去，就可以推知未來。", sentence1: "學習歷史能讓我們鑑往知來，避免重蹈覆轍。", sentence2: "我們要從過去的經驗中鑑往知來，策劃未來的發展方向。", scene: "檢視過去，預知未來。" },
+            { id: 108, term: "依樣畫葫蘆", definition: "照著真葫蘆的樣子畫葫蘆。比喻一味模仿，毫無創見。", sentence1: "學習初期可以依樣畫葫蘆，但熟練後就要有自己的風格。", sentence2: "他只會依樣畫葫蘆，缺乏獨立思考的能力。", scene: "照著樣子模仿，無創新。" },
+            { id: 109, term: "功虧一簣", definition: "比喻事情只差最後一步而失敗。", sentence1: "只差一分就及格了，真是功虧一簣。", sentence2: "這項實驗進行了很久，卻因為一個小失誤而功虧一簣。", scene: "事情只差最後一點失敗。" },
+            { id: 110, term: "所費不貲", definition: "花費無數的錢財。", sentence1: "這次的活動排場浩大，所費不貲。", sentence2: "購買這套音響設備所費不貲，但他覺得非常值得。", scene: "花費巨大，無法計算。" },
+            { id: 111, term: "易如反掌", definition: "像翻一下手掌那麼容易。比喻事情非常容易做到。", sentence1: "以他的實力，要贏得這場比賽簡直是易如反掌。", sentence2: "這道題目對我來說易如反掌，三兩下就解出來了。", scene: "像翻手掌一樣容易。" },
+            { id: 112, term: "九牛二虎", definition: "形容極大的力量（通常接「之力」）。", sentence1: "我們費了九牛二虎之力，才把這個笨重的櫃子搬上樓。", sentence2: "經過大家九牛二虎之力的搶救，終於撲滅了這場大火。", scene: "比喻極大的力量與力氣。" },
+            { id: 113, term: "化險為夷", definition: "轉化危險為平安。", sentence1: "幸好有經驗豐富的嚮導帶路，我們才能化險為夷，平安下山。", sentence2: "他憑著機智和冷靜，成功將這場危機化險為夷。", scene: "轉化危險為平安。" },
+            { id: 114, term: "無所不用其極", definition: "用盡一切手段，不留餘地（多含貶義）。", sentence1: "為了達到目的，他竟然無所不用其極，甚至出賣朋友。", sentence2: "詐騙集團為了騙錢，各種手段無所不用其極。", scene: "用盡一切手段。" },
+            { id: 115, term: "趕盡殺絕", definition: "比喻逼入絕境，不留餘地。", sentence1: "做人要留有餘地，不要對人趕盡殺絕。", sentence2: "他對競爭對手趕盡殺絕的做法，引起了同業的反感。", scene: "殘忍逼迫，不留餘地。" },
+            { id: 116, term: "丈二金剛摸不著頭緒", definition: "比喻搞不清楚狀況，不明所以。", sentence1: "他突如其來的一番話，弄得我丈二金剛摸不著頭緒。", sentence2: "這件事發生得太突然，大家都丈二金剛摸不著頭緒，不知道該如何反應。", scene: "搞不清楚狀況，困惑。" },
+            { id: 117, term: "不言而教", definition: "不用言語，而是以身作則來教導。", sentence1: "父母的身教重於言教，不言而教往往更能影響孩子。", sentence2: "老師以身作則，不言而教，深受學生敬重。", scene: "以身作則，不用言語教導。" },
+            { id: 118, term: "口授心傳", definition: "口頭傳授，心領神會。", sentence1: "原住民族的許多傳統技藝都是靠口授心傳保留下來的。", sentence2: "這種獨門功夫不立文字，全憑師父口授心傳。", scene: "師徒間口頭與心靈傳承。" },
+            { id: 119, term: "天賦異稟", definition: "形容資質特別優異，不同於一般人。", sentence1: "他天賦異稟，三歲就能背誦唐詩三百首。", sentence2: "這位運動員天賦異稟，是百米賽跑的奪冠熱門。", scene: "天生具有特殊的才能。" },
+            { id: 120, term: "與生俱來", definition: "一生下來就具備的。", sentence1: "每個人都有與生俱來的權利，不容剝奪。", sentence2: "她那優雅的氣質彷彿是與生俱來的。", scene: "一出生就擁有的。" },
+            { id: 121, term: "有勇無謀", definition: "只有勇氣，沒有計謀。形容做事魯莽，缺乏策略。", sentence1: "打仗不能光靠蠻力，有勇無謀只會招致失敗。", sentence2: "他做事有勇無謀，常常衝動行事而壞了大事。", scene: "只有勇氣，沒有計謀。" },
+            { id: 122, term: "家學淵源", definition: "家世學問的傳承根基深厚。", sentence1: "他出生書香門第，家學淵源，文章寫得極好。", sentence2: "這位畫家家學淵源，自幼耳濡目染，畫風獨具一格。", scene: "家族世代學問傳承。" },
+            { id: 123, term: "盡心盡力", definition: "費盡心思與力量。", sentence1: "為了辦好這次活動，大家都盡心盡力。", sentence2: "他對公司盡心盡力，是老闆的得力助手。", scene: "用盡心思與力氣。" },
+            { id: 124, term: "全力以赴", definition: "投入全部心力。", sentence1: "面對這次挑戰，我們一定要全力以赴，爭取勝利。", sentence2: "只要你全力以赴，無論結果如何，都不會留有遺憾。", scene: "投入全部力量去奮鬥。" },
+            { id: 125, term: "斷簡殘篇", definition: "殘缺不全的書籍或文章。", sentence1: "考古學家從這些斷簡殘篇中，拼湊出古代的歷史面貌。", sentence2: "雖然只是斷簡殘篇，但對研究當時的社會文化仍有極大的價值。", scene: "殘缺不全的書籍文章。" },
+            { id: 126, term: "金玉良言", definition: "比喻可貴而有價值的勸告或教誨。", sentence1: "老師的教誨句句都是金玉良言，我們要銘記在心。", sentence2: "這本書裡充滿了人生的智慧，可說是金玉良言。", scene: "像金玉般寶貴的教誨。" },
+            { id: 127, term: "一回生，二回熟", definition: "第一次生疏，第二次就熟悉了。", sentence1: "別擔心，一回生，二回熟，多練習幾次就會了。", sentence2: "一回生，二回熟，我們多見幾次面就是朋友了。", scene: "第一次生疏，第二次熟練。" },
+            { id: 128, term: "操之過急", definition: "處理事情過於急躁。", sentence1: "教育孩子要循循善誘，不能操之過急，以免造成反效果。", sentence2: "這項改革牽涉甚廣，不宜操之過急，應審慎規劃。", scene: "處理事情過於急躁。" },
+            { id: 129, term: "恍然大悟", definition: "忽然完全明白。", sentence1: "聽了老師的解釋，我才恍然大悟，原來這題是這樣解的。", sentence2: "看完結局，觀眾才恍然大悟，原來兇手是他。", scene: "突然完全明白。" },
+            { id: 130, term: "一言難盡", definition: "事情曲折複雜，無法用一句話說清楚。", sentence1: "這件事說來話長，一言難盡，改天再細說吧。", sentence2: "看到他歷經滄桑的臉龐，心中的感受真是一言難盡。", scene: "事情複雜，很難一句話說完。" },
+            { id: 131, term: "水落石出", definition: "水位降低，石頭就顯露出來。比喻事情真相大白。", sentence1: "警方正全力偵辦此案，相信真相很快就會水落石出。", sentence2: "等到調查報告公布，整件事情的責任歸屬就會水落石出。", scene: "真相大白。" },
+            { id: 132, term: "名列前茅", definition: "形容成績優異，排名在最前面。", sentence1: "他的成績一向優異，在班上總是名列前茅。", sentence2: "這家公司的業績在同業中名列前茅，競爭力很強。", scene: "成績優異，排名前列。" },
+            { id: 133, term: "事過境遷", definition: "事情過了，環境也已改變。", sentence1: "雖然當年我們有過爭執，但如今事過境遷，大家早就釋懷了。", sentence2: "這裡曾是繁華的港口，如今事過境遷，只剩下斷垣殘壁。", scene: "事情過去，環境改變。" },
+            { id: 134, term: "彌足珍貴", definition: "形容更加值得珍惜寶貴。", sentence1: "這張泛黃的老照片記錄了爺爺奶奶的年輕歲月，對家人來說彌足珍貴。", sentence2: "在乾旱時期，每一滴水都顯得彌足珍貴。", scene: "非常寶貴，值得珍惜。" },
+            { id: 135, term: "如雷貫耳", definition: "像雷聲傳入耳朵那樣響亮。比喻人的名氣很大。", sentence1: "久仰大名，您的名字在業界可是如雷貫耳啊！", sentence2: "這位鋼琴家的名聲如雷貫耳，演奏會門票一開賣就秒殺。", scene: "名聲很大，像雷響過耳。" },
+            { id: 136, term: "不脛而走", definition: "脛，小腿。沒有腿也能跑。比喻事物不用推廣，也能迅速傳播。", sentence1: "這個好消息不脛而走，很快就傳遍了整個校園。", sentence2: "關於他的緋聞不脛而走，成為大家茶餘飯後的熱門話題。", scene: "消息傳播得很快。" },
+            { id: 137, term: "米珠薪桂", definition: "米如珍珠，柴如桂木。比喻物價昂貴。", sentence1: "戰亂時期，物價飛漲，米珠薪桂，百姓生活苦不堪言。", sentence2: "在這米珠薪桂的大城市裡生活，年輕人要存錢真的很不容易。", scene: "物價昂貴，生活不易。" },
+            { id: 138, term: "絕處逢生", definition: "在毫無辦法之下又得生路。", sentence1: "登山隊在斷糧多日後終於獲救，真是絕處逢生。", sentence2: "就在公司即將倒閉之際，這筆訂單讓他們絕處逢生，度過難關。", scene: "在絕境中找到生路。" },
+            { id: 139, term: "世外桃源", definition: "比喻風景優美而人跡罕至的地方，或理想中的安樂世界。", sentence1: "這座山中小村風景秀麗，民風淳樸，宛如世外桃源。", sentence2: "週末假期來到這個世外桃源般的民宿，讓人忘卻了工作的煩惱。", scene: "與世隔絕的理想境界。" },
+            { id: 140, term: "白雲蒼狗", definition: "比喻世事變幻無常。", sentence1: "幾年不見，家鄉已是高樓林立，讓人有白雲蒼狗之感。", sentence2: "世事如白雲蒼狗，我們應該把握當下，珍惜眼前人。", scene: "世事變幻無常。" },
+            { id: 141, term: "不可勝數", definition: "形容數量極多，數都數不完。", sentence1: "天上的星星多得不可勝數。", sentence2: "他的發明專利不可勝數，是位多產的發明家。", scene: "數目極多，數不完。" },
+            { id: 142, term: "屈指可數", definition: "彎著手指頭就數得出來。形容數量很少。", sentence1: "像他這樣有才華的人，在國內已是屈指可數。", sentence2: "這裡的遊客屈指可數，顯得格外冷清。", scene: "數量很少，數得出來。" },
+            { id: 143, term: "絕無僅有", definition: "只有一個，再沒有別的。形容極其稀有。", sentence1: "這種奇特的自然景觀，在世界上可說是絕無僅有。", sentence2: "這是絕無僅有的機會，你一定要好好把握。", scene: "只有一個，極其稀有。" },
+            { id: 144, term: "近在咫尺", definition: "形容距離非常近。", sentence1: "成功往往近在咫尺，只要再堅持一下就能達到。", sentence2: "雖然我們住得近在咫尺，卻很少有機會見面。", scene: "距離非常近。" },
+            { id: 145, term: "山珍海味", definition: "山中與海裡的珍貴食物。泛指豐盛的菜餚。", sentence1: "雖然沒有山珍海味，但這些家常菜卻充滿了媽媽的味道。", sentence2: "宴席上擺滿了山珍海味，令人垂涎三尺。", scene: "豐盛珍貴的菜餚。" },
+            { id: 146, term: "花團錦簇", definition: "形容五彩繽紛、繁華美麗的樣子。", sentence1: "春天到了，公園裡花團錦簇，美不勝收。", sentence2: "國慶日時，廣場上布置得花團錦簇，喜氣洋洋。", scene: "形容繁華熱鬧的景象。" },
+            { id: 147, term: "苦不堪言", definition: "痛苦或困苦到了極點，無法用言語形容。", sentence1: "接連的打擊讓他苦不堪言，幾乎快要崩潰。", sentence2: "酷熱的天氣加上停電，讓居民們苦不堪言。", scene: "痛苦到說不出來。" },
+            { id: 148, term: "古木參天", definition: "古老的樹木高聳入天。", sentence1: "這座森林裡古木參天，遮天蔽日，非常壯觀。", sentence2: "走在古木參天的步道上，呼吸著芬多精，令人身心舒暢。", scene: "古樹高大，直入雲霄。" },
+            { id: 149, term: "旭日東升", definition: "清晨太陽剛從東方升起。比喻充滿活力、生機勃勃。", sentence1: "看到旭日東升的景象，讓人對未來充滿了希望。", sentence2: "這家公司正如旭日東升，發展潛力無窮。", scene: "早晨太陽升起，充滿朝氣。" },
+            { id: 150, term: "朝氣蓬勃", definition: "形容精神煥發，充滿生命力。", sentence1: "這些年輕人朝氣蓬勃，為社會注入了新的活力。", sentence2: "看著孩子們朝氣蓬勃的笑臉，所有的疲憊都消失了。", scene: "充滿生機與活力。" },
+            { id: 151, term: "五味雜陳", definition: "形容內心感受複雜，難以形容。", sentence1: "畢業典禮上，大家心裡五味雜陳，既開心又不捨。", sentence2: "聽到這個消息，他心中五味雜陳，不知該哭還是該笑。", scene: "感受複雜，難以形容。" },
+            { id: 152, term: "賞心悅目", definition: "因看到美好的景物而身心愉快。", sentence1: "這裡的風景優美，讓人看了賞心悅目。", sentence2: "她的穿著打扮大方得體，令人賞心悅目。", scene: "看了心情舒服愉快。" },
+            { id: 153, term: "無遠弗屆", definition: "不管多遠之處，沒有不到達的。", sentence1: "網際網路的影響力無遠弗屆，改變了人們的生活方式。", sentence2: "愛的力量是無遠弗屆的，可以跨越國界和種族。", scene: "力量或影響力到達極遠處。" },
+            { id: 154, term: "不捨晝夜", definition: "日夜不停。", sentence1: "為了完成這項工程，工人們不捨晝夜地趕工。", sentence2: "時間如流水般不捨晝夜地流逝，我們要懂得珍惜。", scene: "日夜不停，勤奮不懈。" },
+            { id: 155, term: "井然有條", definition: "形容整齊有條理。", sentence1: "她的房間總是整理得井然有條，一塵不染。", sentence2: "他處理事情井然有條，從不出錯。", scene: "條理分明，整齊不亂。" },
+            { id: 156, term: "循循善誘", definition: "善於有步驟地引導、教育。", sentence1: "老師循循善誘，讓學生們逐漸對數學產生了興趣。", sentence2: "感謝教練的循循善誘，讓我能克服恐懼，學會游泳。", scene: "善於有步驟地引導教誨。" },
+            { id: 157, term: "日久彌新", definition: "雖然經歷長久的時間，反而更加鮮明或呈現新的氣象。", sentence1: "這份友誼歷經多年，日久彌新。", sentence2: "這部經典名著的價值日久彌新，值得一讀再讀。", scene: "歷久更顯價值或新意。" },
+            { id: 158, term: "仰之彌高", definition: "指人的學養德行崇高，令人景仰。（出自論語）", sentence1: "顏回讚嘆孔子的學問是「仰之彌高，鑽之彌堅」。", sentence2: "大師的成就令人仰之彌高，是後輩學習的榜樣。", scene: "敬仰之情，越看越崇高。" },
+            { id: 159, term: "難以置信", definition: "很難讓人相信。", sentence1: "這個魔術太神奇了，簡直令人難以置信。", sentence2: "聽到他中樂透的消息，大家都覺得難以置信。", scene: "難以相信是真的。" },
+            { id: 160, term: "熙來攘往", definition: "形容行人往來眾多，非常熱鬧。", sentence1: "夜市裡熙來攘往，非常熱鬧。", sentence2: "假日的車站熙來攘往，到處都是旅客。", scene: "人來人往，熱鬧繁忙。" },
+            { id: 161, term: "聚眾滋事", definition: "聚集群眾鬧事。", sentence1: "警方嚴厲取締聚眾滋事的份子，維護社會治安。", sentence2: "這些青少年聚眾滋事，被警方帶回警局偵訊。", scene: "聚集群眾製造事端。" },
+            { id: 162, term: "不可一世", definition: "形容人狂傲自大，以為無人能及。", sentence1: "他仗著家裡有錢，一副不可一世的樣子，令人討厭。", sentence2: "剛出道的他曾不可一世，但經歷挫折後變得謙虛多了。", scene: "狂傲自大，瞧不起人。" },
+            { id: 163, term: "毫不猶豫", definition: "絲毫沒有遲疑。", sentence1: "看到老人跌倒，他毫不猶豫地衝上前去扶起。", sentence2: "面對這個難得的機會，她毫不猶豫地答應了。", scene: "態度果決，沒有遲疑。" },
+            { id: 164, term: "人定勝天", definition: "人的智慧和力量可以戰勝自然。", sentence1: "雖然天災可怕，但我們相信人定勝天，只要團結一定能重建家園。", sentence2: "許多工程奇蹟都證明了人定勝天的道理。", scene: "人力可以戰勝自然。" },
+            { id: 165, term: "不足為奇", definition: "不值得奇怪。", sentence1: "這種事情在現代社會已經不足為奇了。", sentence2: "他的成功是努力的結果，不足為奇。", scene: "很平常，不值得奇怪。" },
+            { id: 166, term: "一枝獨秀", definition: "比喻在同類中特別突出。", sentence1: "在眾多參賽者中，她的表現一枝獨秀，獲得評審一致好評。", sentence2: "這家公司的業績在不景氣的環境中一枝獨秀。", scene: "技藝超群或獨自繁榮。" },
+            { id: 167, term: "無濟於事", definition: "對事情沒有幫助。", sentence1: "事已至此，再多的抱怨也無濟於事，不如想辦法解決。", sentence2: "光是著急也無濟於事，我們要冷靜下來思考對策。", scene: "補救也沒用，於事無補。" },
+            { id: 168, term: "飄洋過海", definition: "渡過海洋。形容路途遙遠。", sentence1: "先民們飄洋過海來到台灣，開墾这片土地。", sentence2: "這件商品是飄洋過海進口來的，價格自然不便宜。", scene: "渡過海洋，到遠方去。" },
+            { id: 169, term: "死到臨頭", definition: "死亡的時刻已經來臨。形容面臨極大的危險或災難。", sentence1: "都要死到臨頭了，你還有心情開玩笑？", sentence2: "歹徒被警方包圍，死到臨頭還想做困獸之鬥。", scene: "面臨死亡或極大災禍。" },
+            { id: 170, term: "說時遲，那時快", definition: "形容動作或事情發生得非常迅速。", sentence1: "說時遲，那時快，守門員一個飛撲，擋下了這球必進的射門。", sentence2: "說時遲，那時快，貓咪瞬間就抓住了老鼠。", scene: "形容動作極快或時間極短。" },
+            { id: 171, term: "一而再，再而三", definition: "一次又一次。", sentence1: "老師一而再，再而三地叮嚀我們要注意安全。", sentence2: "他一而再，再而三地犯錯，終於被開除了。", scene: "接連不斷，多次重複。" },
+            { id: 172, term: "傷春悲秋", definition: "因季節景物變化而感傷。形容多愁善感。", sentence1: "她總是傷春悲秋，一點小事就掉眼淚。", sentence2: "與其整天傷春悲秋，不如振作起來做點有意義的事。", scene: "感嘆季節，情緒低落多愁。" },
+            { id: 173, term: "如影隨形", definition: "好像影子跟在身體後面一樣。比喻常在一起，或關係密切。", sentence1: "這些煩惱如影隨形，讓他無法安心工作。", sentence2: "孤獨感就像如影隨形般，時刻伴隨著他。", scene: "像影子跟著身體，分不開。" },
+            { id: 174, term: "一帆風順", definition: "船掛滿帆，順風行駛。比喻事情非常順利，沒有阻礙。", sentence1: "祝你未來的事業一帆風順，鵬程萬里。", sentence2: "人生不可能永遠一帆風順，總會遇到一些挫折。", scene: "旅程或事情非常順利。" }
+        ];
+
+        // --- Icons (優化版) ---
+        const icons = {
+            check: <polyline points="20 6 9 17 4 12" />,
+            play: <polygon points="5 3 19 12 5 21 5 3" />,
+            book: <><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></>,
+            menu: <><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></>,
+            left: <polyline points="15 18 9 12 15 6"/>,
+            heart: <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>,
+            history: <><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="10"/></>,
+            alert: <><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></>,
+            trash: <><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></>,
+            login: <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/>,
+            lightning: <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>,
+            logout: <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>,
+            userX: <><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="18" y1="8" x2="23" y2="13"/><line x1="23" y1="8" x2="18" y2="13"/></>,
+            search: <><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></>,
+            list: <><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></>
+        };
+
+        const Icon = ({ path, className, fill = "none" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill={fill} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{path}</svg>
+        );
+
+        // -- Components --
+
+        const MenuView = ({ 
+            userName, setUserName, showNameWarning, mistakeLog, favorites, parsedData, 
+            onStartLearn, onStartQuiz, onViewHistory, onViewMistakes, onViewTable,
+            onLogin, isLocked, onQuickLogin, lastUser, onLogout, onDeleteUser
+        }) => (
+            <div className="max-w-5xl mx-auto px-4 py-8 animate-fade-in-up">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 gap-6">
+                    <div>
+                        <h1 className="text-4xl md:text-5xl font-extrabold text-amber-900 tracking-tight flex items-center gap-3 font-serif drop-shadow-sm">
+                            <span className="text-5xl md:text-6xl filter drop-shadow-md">📜</span> 
+                            <div>
+                                成語大師 <span className="text-lg md:text-xl block md:inline text-amber-700 font-normal">精選成語版</span>
+                            </div>
+                        </h1>
+                        <div className="mt-6 flex flex-wrap items-center gap-3 p-4 bg-amber-100/80 backdrop-blur-sm rounded-xl border border-amber-200 shadow-sm">
+                            <span className="text-amber-900 font-bold text-lg">主公姓名：</span>
+                            <div className="relative flex flex-wrap items-center gap-2">
+                                <input 
+                                    type="text" 
+                                    value={userName}
+                                    onChange={(e) => !isLocked && setUserName(e.target.value)}
+                                    placeholder="請輸入姓名"
+                                    disabled={isLocked}
+                                    className={`border-2 rounded-lg px-4 py-2 outline-none transition-all text-lg w-48 ${isLocked ? 'bg-amber-50 text-gray-500 border-amber-200 cursor-not-allowed font-bold' : (showNameWarning ? 'border-red-500 bg-red-50 ring-2 ring-red-200 animate-shake' : 'border-amber-300 focus:ring-4 focus:ring-amber-200 focus:border-amber-500 bg-white')}`}
+                                />
+                                {!isLocked ? (
+                                    <button onClick={onLogin} className="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg text-base font-bold flex items-center transition-colors shadow-sm transform active:scale-95">
+                                        <Icon path={icons.login} className="w-5 h-5 mr-2" fill="currentColor"/> 登入
+                                    </button>
+                                ) : (
+                                    <div className="flex flex-wrap gap-2">
+                                        <span className="bg-green-100 text-green-800 px-3 py-2 rounded-lg text-sm font-bold flex items-center border border-green-200">
+                                            <Icon path={icons.check} className="w-5 h-5 mr-1.5"/> 已登入
+                                        </span>
+                                        <button onClick={onLogout} className="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center transition-colors shadow-sm">
+                                            <Icon path={icons.logout} className="w-4 h-4 mr-1.5" fill="currentColor"/> 登出
+                                        </button>
+                                        <button onClick={onDeleteUser} className="bg-gray-400 hover:bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center transition-colors shadow-sm group" title="刪除使用者">
+                                            <Icon path={icons.userX} className="w-4 h-4 mr-1.5 group-hover:scale-110 transition-transform" fill="currentColor"/> 刪除
+                                        </button>
+                                    </div>
+                                )}
+                                {!isLocked && lastUser && (
+                                    <button onClick={onQuickLogin} className="bg-blue-100 hover:bg-blue-200 text-blue-800 px-4 py-2 rounded-lg text-sm font-bold flex items-center transition-colors border border-blue-200">
+                                        <Icon path={icons.lightning} className="w-4 h-4 mr-1.5" fill="currentColor"/> 快速登入 ({lastUser})
+                                    </button>
+                                )}
+                                {showNameWarning && <div className="absolute left-0 -bottom-8 text-sm text-red-600 font-bold bg-red-100 px-2 py-1 rounded">* 請先輸入姓名並登入</div>}
+                            </div>
+                        </div>
+                    </div>
+                    <div className="flex gap-3 w-full md:w-auto">
+                        <button onClick={onViewHistory} className="flex-1 md:flex-none justify-center flex items-center px-5 py-3 bg-white/90 backdrop-blur text-gray-700 rounded-xl shadow-sm hover:shadow-md hover:bg-white border-2 border-gray-200 font-bold text-lg transition-all"><Icon path={icons.history} className="w-5 h-5 mr-2"/> 戰績</button>
+                        <button onClick={onViewMistakes} className="flex-1 md:flex-none justify-center flex items-center px-5 py-3 bg-red-50/90 backdrop-blur text-red-700 rounded-xl shadow-sm hover:shadow-md hover:bg-red-100 border-2 border-red-200 font-bold text-lg transition-all"><Icon path={icons.alert} className="w-5 h-5 mr-2"/> 錯題 ({mistakeLog.length})</button>
+                    </div>
+                </div>
+
+                {/* 成語一覽表按鈕 */}
+                <div className="mb-8">
+                    <button onClick={onViewTable} className="w-full py-4 bg-purple-600/90 backdrop-blur hover:bg-purple-700 text-white rounded-2xl shadow-lg hover:shadow-xl font-bold text-xl flex items-center justify-center transition-all transform active:scale-[0.99] border-2 border-purple-400 group">
+                        <Icon path={icons.list} className="w-6 h-6 mr-3 group-hover:scale-110 transition-transform"/> 成語一覽表 (快速查詢)
+                    </button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {/* 錦囊收藏卡片 */}
+                    <div className="bg-gradient-to-br from-red-50/90 to-orange-50/90 backdrop-blur p-8 rounded-2xl shadow-sm border-2 border-red-100 flex flex-col justify-between hover:border-red-200 transition-colors">
+                        <div className="flex items-start mb-6">
+                            <div className="bg-white p-4 rounded-2xl shadow-sm text-red-500 mr-5 border border-red-100">
+                                <Icon path={icons.heart} className="w-10 h-10" fill="currentColor"/>
+                            </div>
+                            <div>
+                                <h3 className="text-2xl font-black text-gray-800 mb-1">錦囊收藏</h3>
+                                <p className="text-gray-600 font-medium">目前收藏了 <span className="text-red-600 font-bold text-xl">{favorites.length}</span> 則成語</p>
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4 mt-auto">
+                            <button onClick={() => onStartLearn('收藏夾')} disabled={favorites.length===0} className="py-3 bg-white text-red-700 rounded-xl shadow-sm hover:bg-red-50 font-bold text-lg border-2 border-red-100 disabled:opacity-50 disabled:cursor-not-allowed">溫故</button>
+                            <button onClick={() => onStartQuiz('收藏夾')} disabled={favorites.length===0} className="py-3 bg-red-600 text-white rounded-xl shadow-lg hover:bg-red-700 font-bold text-lg transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">知新挑戰</button>
+                        </div>
+                    </div>
+                    
+                    {/* 精選成語卡片 */}
+                    <div className="bg-white/90 backdrop-blur p-8 rounded-2xl shadow-sm hover:shadow-xl transition-all border-2 border-amber-200 flex flex-col relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-amber-100 rounded-bl-full -mr-12 -mt-12 opacity-50 group-hover:scale-110 transition-transform duration-500"></div>
+                        <div className="flex justify-between items-start mb-3 relative z-10">
+                            <h3 className="text-3xl font-black text-amber-900">精選成語</h3>
+                            <span className="text-sm font-bold text-amber-700 bg-amber-100 px-3 py-1 rounded-full border border-amber-200">全 174 則</span>
+                        </div>
+                        <div className="text-gray-500 mb-8 font-medium text-lg relative z-10">
+                            包含飲水思源、杯水車薪、未雨綢繆...等常用成語，增進語文能力。
+                        </div>
+                        <div className="grid grid-cols-2 gap-4 mt-auto relative z-10">
+                            <button onClick={() => onStartLearn('精選成語')} className="flex items-center justify-center py-3 bg-amber-50 text-amber-900 rounded-xl hover:bg-amber-100 font-bold text-lg border-2 border-amber-200 transition-colors"><Icon path={icons.book} className="w-5 h-5 mr-2"/> 研讀</button>
+                            <button onClick={() => onStartQuiz('精選成語')} className="flex items-center justify-center py-3 bg-amber-600 text-white rounded-xl shadow-lg hover:bg-amber-700 font-bold text-lg transform active:scale-95 transition-all"><Icon path={icons.play} className="w-5 h-5 mr-2"/> 開始挑戰</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div className="mt-12 text-center text-gray-500 text-sm font-medium bg-white/50 backdrop-blur rounded-full py-2 inline-block px-6 mx-auto w-full md:w-auto">
+                    &copy; 2025 成語大師 • 互動式學習系統
+                </div>
+            </div>
+        );
+
+        // TableView 組件 (移除人物)
+        const TableView = ({ items, onMenu }) => {
+            const [searchTerm, setSearchTerm] = useState("");
+            
+            const filteredItems = useMemo(() => {
+                if (!searchTerm.trim()) return items;
+                const lowerTerm = searchTerm.toLowerCase();
+                return items.filter(item => 
+                    String(item.id).includes(lowerTerm) ||
+                    item.term.includes(lowerTerm) ||
+                    item.definition.includes(lowerTerm) ||
+                    item.sentence1.includes(lowerTerm)
+                );
+            }, [items, searchTerm]);
+
+            return (
+                <div className="max-w-7xl mx-auto px-4 py-8 animate-fade-in-up">
+                    <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-xl overflow-hidden border border-gray-200 flex flex-col h-[85vh]">
+                        {/* Header & Search */}
+                        <div className="p-6 border-b border-gray-200 bg-gray-50 flex flex-col md:flex-row justify-between items-center gap-4">
+                            <div className="flex items-center gap-4 w-full md:w-auto">
+                                <button onClick={onMenu} className="flex items-center text-gray-600 hover:text-gray-900 font-bold bg-white border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors shadow-sm">
+                                    <Icon path={icons.left} className="w-5 h-5 mr-2"/> 返回
+                                </button>
+                                <h2 className="text-2xl font-black text-gray-800 flex items-center">
+                                    <Icon path={icons.list} className="w-6 h-6 mr-3 text-purple-600"/>
+                                    成語一覽表
+                                    <span className="ml-3 text-sm font-normal text-gray-500 bg-gray-200 px-2 py-1 rounded-full">共 {items.length} 則</span>
+                                </h2>
+                            </div>
+                            <div className="relative w-full md:w-96">
+                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                                    <Icon path={icons.search} className="w-5 h-5"/>
+                                </div>
+                                <input
+                                    type="text"
+                                    placeholder="搜尋名稱、編號..."
+                                    className="pl-10 pr-4 py-3 border-2 border-gray-300 rounded-xl w-full focus:ring-4 focus:ring-purple-100 focus:border-purple-500 outline-none transition-all"
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Table Content */}
+                        <div className="flex-1 overflow-auto bg-white p-0">
+                            <table className="w-full text-left border-collapse prose-table">
+                                <thead className="bg-purple-50 sticky top-0 z-10 shadow-sm">
+                                    <tr>
+                                        <th className="p-4 font-black text-purple-900 border-b-2 border-purple-100 w-20 text-center">編號</th>
+                                        <th className="p-4 font-black text-purple-900 border-b-2 border-purple-100 w-48">成語名稱</th>
+                                        <th className="p-4 font-black text-purple-900 border-b-2 border-purple-100">釋義</th>
+                                        <th className="p-4 font-black text-purple-900 border-b-2 border-purple-100 w-96">應用範例</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100">
+                                    {filteredItems.length > 0 ? (
+                                        filteredItems.map(item => (
+                                            <tr key={item.id} className="hover:bg-purple-50/50 transition-colors">
+                                                <td className="p-4 text-center font-mono text-gray-500 font-bold bg-gray-50/50">{item.id}</td>
+                                                <td className="p-4 font-bold text-gray-900 text-lg sticky left-0 bg-white md:static">{item.term}</td>
+                                                <td className="p-4 text-gray-600 leading-relaxed text-sm">{item.definition}</td>
+                                                <td className="p-4 text-gray-500 italic text-sm border-l-4 border-gray-100 bg-gray-50/30">
+                                                    {item.sentence1}
+                                                </td>
+                                            </tr>
+                                        ))
+                                    ) : (
+                                        <tr>
+                                            <td colSpan="4" className="p-12 text-center text-gray-400">
+                                                <div className="flex flex-col items-center">
+                                                    <Icon path={icons.search} className="w-12 h-12 mb-2 opacity-50"/>
+                                                    <span className="text-lg">找不到符合「{searchTerm}」的資料</span>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div className="bg-gray-50 p-2 text-center text-xs text-gray-400 border-t border-gray-200">
+                            顯示 {filteredItems.length} 筆資料
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const LearnView = ({ 
+            items, learnPage, setLearnPage, favorites, toggleFavorite, completedDays, onMenu 
+        }) => {
+            const totalPages = Math.ceil(items.length / ITEMS_PER_PAGE);
+            const currentItems = items.slice(learnPage * ITEMS_PER_PAGE, (learnPage + 1) * ITEMS_PER_PAGE);
+            const scrollRef = useRef(null);
+
+            useEffect(() => {
+                if (scrollRef.current) scrollRef.current.scrollTop = 0;
+                window.scrollTo(0, 0);
+            }, [learnPage]);
+
+            return (
+                <div className="max-w-4xl mx-auto px-4 py-6" ref={scrollRef}>
+                    <div className="bg-white/90 backdrop-blur-md p-4 rounded-xl shadow-sm mb-8 flex flex-col md:flex-row justify-between items-center sticky top-0 z-30 border-b-2 border-amber-200">
+                        <div className="flex items-center gap-4 mb-4 md:mb-0 w-full md:w-auto">
+                            <button onClick={onMenu} className="text-gray-500 hover:text-gray-900 flex items-center whitespace-nowrap bg-gray-100 px-3 py-2 rounded-lg font-bold"><Icon path={icons.menu} className="w-5 h-5 mr-2"/> 選單</button>
+                            <h2 className="text-2xl font-black flex items-center whitespace-nowrap text-amber-900">
+                                📖 典故卷軸
+                            </h2>
+                        </div>
+                        
+                        <div className="flex overflow-x-auto max-w-full w-full md:w-auto pb-2 md:pb-0 gap-2 mt-2 md:mt-0 no-scrollbar">
+                            {Array.from({ length: totalPages }).map((_, i) => {
+                                const isCompleted = completedDays.includes(`精選成語-${i}`);
+                                return (<button key={i} onClick={() => setLearnPage(i)} className={`px-4 py-2 rounded-lg text-sm font-bold whitespace-nowrap flex items-center gap-2 transition-all flex-shrink-0 ${learnPage === i ? 'bg-amber-600 text-white shadow-md transform scale-105' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>卷 {i + 1} {isCompleted && <span className="bg-green-400 text-white text-[10px] px-1.5 py-0.5 rounded-full">✓</span>}</button>);
+                            })}
+                        </div>
+                    </div>
+                    
+                    <div className="space-y-8">
+                        {currentItems.map((item, idx) => (
+                            <div key={item.id} className="bg-white/95 backdrop-blur-sm rounded-2xl p-6 md:p-8 shadow-sm border border-amber-100 relative group hover:shadow-lg transition-all animate-fade-in-up" style={{animationDelay: `${idx * 0.05}s`}}>
+                                <button onClick={() => toggleFavorite(item.id)} className="absolute top-6 right-6 text-gray-200 hover:text-red-500 z-10 transition-colors">
+                                    <Icon path={icons.heart} className={`w-8 h-8 drop-shadow-sm ${favorites.includes(item.id) ? "text-red-500" : ""}`} fill={favorites.includes(item.id) ? "currentColor" : "none"} />
+                                </button>
+                                <div className="flex flex-col md:flex-row gap-8">
+                                    <div className="flex-1">
+                                        <div className="flex items-baseline gap-3 mb-3 flex-wrap pr-10">
+                                            <span className="text-amber-300 font-mono text-xl font-black">#{String(item.id).padStart(3,'0')}</span>
+                                            <h3 className="text-3xl font-black text-gray-900 tracking-tight">{item.term}</h3>
+                                        </div>
+                                        <div className="bg-gradient-to-r from-amber-50 to-transparent p-4 rounded-xl text-amber-900 mb-6 text-lg font-medium border-l-8 border-amber-400">
+                                            {item.definition}
+                                        </div>
+                                        
+                                        <div className="text-gray-600 leading-relaxed pl-4 italic border-l-4 border-gray-300 text-lg bg-gray-50 py-2 pr-2 rounded-r-lg">
+                                            <span className="font-bold not-italic text-gray-400 mr-2 text-sm">應用範例</span>
+                                            {item.sentence1 && item.sentence1.split(item.term).map((part, i, arr) => (<React.Fragment key={i}>{part}{i < arr.length - 1 && <span className="text-amber-700 font-bold mx-1 border-b-2 border-amber-700">{item.term}</span>}</React.Fragment>))}
+                                        </div>
+                                    </div>
+                                    
+                                    {/* Image Section - 改用情境描述 */}
+                                    <div className="w-full md:w-80 flex-shrink-0 flex flex-col items-center">
+                                        <div className="bg-white p-2 border-2 border-gray-100 rounded-2xl w-full shadow-sm">
+                                            <div className="rounded-xl overflow-hidden bg-gray-200 aspect-video relative group-img cursor-pointer w-full">
+                                                <img 
+                                                    src={`images/p${String(item.id).padStart(3, '0')}.jpg`}
+                                                    alt={item.scene} 
+                                                    loading="lazy"
+                                                    className="w-full h-full object-cover transition-transform duration-700 hover:scale-110"
+                                                    onError={(e) => {
+                                                        e.target.onerror = null; 
+                                                        e.target.parentNode.innerHTML = `
+                                                            <div class="w-full h-full flex flex-col items-center justify-center bg-gray-100 text-gray-400 p-4 text-center">
+                                                                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="mb-2 opacity-50"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                                                                <span class="text-sm font-bold text-gray-500">${item.scene}</span>
+                                                            </div>
+                                                        `;
+                                                    }}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                    <div className="h-20"></div>
+                </div>
+            );
+        };
+
+        const QuizView = ({ 
+            questions, score, userName, combo, onAnswer, onFinish, onMenu, onViewHistory, favorites, toggleFavorite,
+            totalItems, quizPage, onPageChange, completedDays 
+        }) => {
+            const [showResult, setShowResult] = useState(false);
+            const isFinished = questions.length > 0 && questions.every(q => q.userAnswer !== null);
+            const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+
+            useEffect(() => { 
+                if (isFinished && !showResult) { 
+                    const timer = setTimeout(() => {
+                        onFinish(); 
+                        setShowResult(true); 
+                    }, 800); 
+                    return () => clearTimeout(timer);
+                } 
+            }, [isFinished]);
+
+            if (showResult) {
+                 return (
+                    <div className="max-w-2xl mx-auto pt-10 px-4 animate-fade-in-up">
+                        <div className="bg-white rounded-3xl shadow-2xl overflow-hidden text-center border-4 border-amber-400">
+                            <div className="bg-amber-500 p-10 text-white relative overflow-hidden">
+                                <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
+                                <h2 className="text-4xl font-black mb-2 font-serif relative z-10">戰役結束</h2>
+                                <p className="opacity-90 font-bold text-lg relative z-10">主公 {userName} 辛苦了</p>
+                            </div>
+                            <div className="p-10">
+                                <div className="text-8xl font-black text-amber-600 mb-2 font-mono tracking-tighter">{score} <span className="text-3xl text-gray-300 font-bold">/ {questions.length}</span></div>
+                                <div className="text-gray-400 font-bold mb-8 uppercase tracking-widest">本次戰功</div>
+                                
+                                <div className="flex justify-center gap-4 mb-10">
+                                    <div className="flex-1 bg-green-50 text-green-700 py-4 rounded-2xl font-black text-xl border-2 border-green-200">
+                                        大捷 {score}
+                                    </div>
+                                    <div className="flex-1 bg-red-50 text-red-700 py-4 rounded-2xl font-black text-xl border-2 border-red-200">
+                                        失利 {questions.length - score}
+                                    </div>
+                                </div>
+                                
+                                <div className="flex flex-col gap-4">
+                                    <button onClick={onMenu} className="w-full py-4 bg-gray-100 hover:bg-gray-200 rounded-2xl font-black text-gray-700 text-xl transition-colors">返回大營</button>
+                                    <button onClick={onViewHistory} className="w-full py-4 bg-amber-600 hover:bg-amber-700 rounded-2xl font-black text-white shadow-xl shadow-amber-200 text-xl transition-all transform active:scale-95">查看詳細戰報</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="max-w-4xl mx-auto pb-20 px-4">
+                    <div className="bg-white/95 backdrop-blur shadow-sm p-4 rounded-b-2xl mb-8 sticky top-0 z-30 border-t-4 border-amber-500 flex flex-col md:flex-row justify-between items-center transition-all">
+                        <div className="flex items-center gap-4 mb-4 md:mb-0 w-full md:w-auto justify-between md:justify-start">
+                            <button onClick={onMenu} className="text-gray-500 text-sm flex items-center hover:text-red-600 font-bold bg-gray-100 px-3 py-2 rounded-lg transition-colors"><Icon path={icons.left} className="w-4 h-4 mr-1"/> 撤退</button>
+                            <div className="font-bold text-xl flex items-center gap-3">
+                                <span>{userName}</span>
+                                <span className="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm font-black border border-amber-200">戰功: {score}</span>
+                            </div>
+                            <div className="w-24 text-right">
+                                {combo > 1 && <div className="text-orange-600 font-black animate-pop text-2xl drop-shadow-sm inline-block">🔥 x{combo}</div>}
+                            </div>
+                        </div>
+                        <div className="flex overflow-x-auto max-w-full w-full md:w-auto pb-1 md:pb-0 gap-2 no-scrollbar">
+                             {Array.from({ length: totalPages }).map((_, i) => {
+                                const isCompleted = completedDays.includes(`精選成語-${i}`);
+                                return (
+                                    <button key={i} onClick={() => onPageChange(i)} 
+                                        className={`px-3 py-1.5 rounded-md text-xs font-bold whitespace-nowrap flex items-center gap-1 transition-all flex-shrink-0
+                                        ${quizPage === i ? 'bg-amber-600 text-white shadow-md' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
+                                        卷{i + 1}
+                                        {isCompleted && <span className="bg-green-400 text-white text-[10px] w-3 h-3 flex items-center justify-center rounded-full">✓</span>}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    <div className="space-y-8">
+                        {questions.map((q, idx) => (
+                            <div key={idx} className={`bg-white/95 backdrop-blur-sm rounded-3xl shadow-sm border-4 overflow-hidden transition-all duration-500 relative ${q.userAnswer === null ? 'border-transparent shadow-md' : (q.isCorrect ? 'border-green-200 bg-green-50/20' : 'border-red-200 bg-red-50/20')}`}>
+                                <button onClick={() => toggleFavorite(q.id)} className={`absolute top-5 right-5 z-10 transition-colors p-2 rounded-full bg-white/50 hover:bg-white ${favorites.includes(q.id) ? 'text-red-500' : 'text-gray-300 hover:text-red-500'}`}>
+                                    <Icon path={icons.heart} className="w-7 h-7" fill={favorites.includes(q.id) ? "currentColor" : "none"} />
+                                </button>
+                                <div className="p-8 border-b border-gray-100">
+                                    <div className="flex justify-between items-center mb-6">
+                                        <span className="font-black text-amber-900 tracking-wider text-sm bg-amber-100 px-3 py-1 rounded-full border border-amber-200">問題 {idx + 1}</span>
+                                        {q.userAnswer !== null && (q.isCorrect ? 
+                                            <span className="text-green-600 font-black flex items-center text-lg animate-pop mr-12"><Icon path={icons.check} className="w-6 h-6 mr-1"/> 正確</span> : 
+                                            <span className="text-red-600 font-black flex items-center text-lg animate-shake mr-12"><Icon path={icons.alert} className="w-6 h-6 mr-1"/> 錯誤</span>
+                                        )}
+                                    </div>
+                                    <div className="text-2xl md:text-3xl font-bold text-gray-800 leading-relaxed text-justify">
+                                        {/* 使用 sentence2 作為題目 */}
+                                        {q.sentence2 && q.sentence2.split(q.term).map((part, i, arr) => (
+                                            <span key={i}>
+                                                {part}
+                                                {i < arr.length - 1 && (
+                                                    <span className="inline-block w-32 border-b-4 border-gray-300 mx-2 align-baseline bg-gray-100 rounded px-2 h-8 relative top-1">
+                                                        {q.userAnswer !== null && !q.isCorrect && <span className="absolute -top-8 left-0 text-sm text-green-600 font-bold whitespace-nowrap">{q.term}</span>}
+                                                    </span>
+                                                )}
+                                            </span>
+                                        ))}。
+                                    </div>
+                                </div>
+                                <div className="p-6 bg-gray-50/50">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {q.options.map(opt => {
+                                            let btnClass = "p-5 rounded-2xl border-2 text-left font-bold text-xl transition-all relative overflow-hidden "; 
+                                            if (q.userAnswer === null) btnClass += "bg-white border-gray-200 hover:border-amber-400 hover:shadow-md cursor-pointer active:scale-[0.98] text-gray-700";
+                                            else { 
+                                                if (opt.id === q.id) btnClass += "bg-green-100 border-green-500 text-green-800 ring-2 ring-green-200 shadow-md"; 
+                                                else if (opt.id === q.userAnswer) btnClass += "bg-red-100 border-red-500 text-red-800 opacity-80"; 
+                                                else btnClass += "bg-gray-50 border-gray-200 text-gray-300 opacity-40 grayscale"; 
+                                            }
+                                            return (
+                                                <button key={opt.id} onClick={() => onAnswer(idx, opt.id)} disabled={q.userAnswer !== null} className={btnClass}>
+                                                    {opt.term}
+                                                    {q.userAnswer !== null && opt.id === q.id && <div className="absolute right-4 top-1/2 -translate-y-1/2 text-green-600 bg-white rounded-full p-1"><Icon path={icons.check} className="w-5 h-5"/></div>}
+                                                </button>
+                                            )
+                                        })}
+                                    </div>
+                                </div>
+                                {q.userAnswer !== null && !q.isCorrect && (
+                                    <div className="p-6 bg-red-50/50 border-t border-red-100 animate-fade-in-up">
+                                        <div className="bg-white rounded-xl p-5 border border-red-200 flex flex-col md:flex-row gap-5 items-start shadow-sm">
+                                            <div className="w-full md:w-40 aspect-video rounded-lg overflow-hidden border border-gray-200 bg-gray-100 flex-shrink-0">
+                                                <img 
+                                                    src={`images/p${String(q.id).padStart(3, '0')}.jpg`}
+                                                    className="w-full h-full object-cover" 
+                                                    onError={(e) => {
+                                                        e.target.onerror = null; 
+                                                        e.target.parentNode.innerHTML = `<div class="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400 text-xs p-2 text-center">${q.scene}</div>`;
+                                                    }}
+                                                />
+                                            </div>
+                                            <div className="flex-1">
+                                                <div className="text-sm font-black text-red-800 mb-1 flex items-center gap-2 uppercase tracking-wide">
+                                                    <Icon path={icons.book} className="w-4 h-4"/> 成語釋義
+                                                </div>
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <div className="text-2xl font-black text-gray-900">{q.term}</div>
+                                                </div>
+                                                <div className="text-gray-700 text-base leading-relaxed">{q.definition}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        };
+
+        const HistoryView = ({ historyLog, setHistoryLog, onMenu }) => {
+            const [selectedLog, setSelectedLog] = useState(null);
+            
+            const renderQuestionSentence = (sentence, term) => { if (!sentence) return <span className="text-gray-400 italic">（例句資料缺失）</span>; return sentence.split(term).map((part, i, arr) => (<span key={i}>{part}{i < arr.length - 1 && <span className="inline-block min-w-[3rem] border-b-2 border-gray-400 mx-1 align-bottom text-transparent select-none bg-gray-200/50 rounded h-6"></span>}</span>)); };
+
+            if (selectedLog) {
+                return (
+                    <div className="w-full max-w-4xl mx-auto bg-white/95 backdrop-blur-md min-h-screen p-6 md:p-8 shadow-2xl animate-fade-in-up">
+                        <div className="flex justify-between items-center mb-8 pb-4 border-b border-gray-200 sticky top-0 bg-white z-20 pt-4">
+                            <button onClick={() => setSelectedLog(null)} className="flex items-center text-gray-500 hover:text-amber-800 font-bold text-lg px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"><Icon path={icons.left} className="w-6 h-6 mr-1"/> 返回</button>
+                            <div className="text-right">
+                                <h2 className="text-2xl font-black text-gray-800">戰役回放</h2>
+                                <p className="text-gray-500 text-sm mt-1 font-mono">{selectedLog.date}</p>
+                            </div>
+                        </div>
+                        <div className="space-y-6">
+                            <div className="flex justify-center mb-8">
+                                <div className="text-center">
+                                    <div className="text-sm text-gray-400 font-bold uppercase mb-1">總得分</div>
+                                    <div className="text-5xl font-black text-amber-600">{selectedLog.score} <span className="text-2xl text-gray-300">/ {selectedLog.total}</span></div>
+                                </div>
+                            </div>
+                            {selectedLog.details.map((d, i) => (
+                                <div key={i} className={`p-6 rounded-2xl border-l-8 shadow-sm ${d.isCorrect ? 'border-green-400 bg-green-50/30' : 'border-red-400 bg-red-50/30'}`}>
+                                    <div className="mb-3 font-bold text-gray-800 text-xl leading-relaxed">{renderQuestionSentence(d.sentence, d.term)}</div>
+                                    <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-6 bg-white/50 p-3 rounded-lg">
+                                        <div className="flex items-center">
+                                            <span className="text-gray-400 text-xs font-bold uppercase mr-2">您的選擇</span>
+                                            <span className={`text-lg font-bold ${d.isCorrect ? "text-green-700" : "text-red-600 line-through decoration-2"}`}>{d.userAnswer}</span>
+                                        </div>
+                                        {!d.isCorrect && (
+                                            <div className="flex items-center">
+                                                <span className="text-gray-400 text-xs font-bold uppercase mr-2">正解</span>
+                                                <span className="text-green-700 text-lg font-black">{d.correctAnswer}</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="h-20"></div>
+                    </div>
+                )
+            }
+            return (
+                <div className="max-w-4xl mx-auto px-4 py-8">
+                    <div className="flex items-center mb-8">
+                        <button onClick={onMenu} className="mr-4 p-3 bg-white rounded-xl shadow border border-gray-200 hover:bg-gray-50"><Icon path={icons.left} className="w-5 h-5"/></button>
+                        <h2 className="text-3xl font-black text-gray-800 flex items-center gap-3">📜 歷史戰績 <span className="text-sm font-normal text-gray-500 bg-gray-100 px-2 py-1 rounded-full">{historyLog.length} 場</span></h2>
+                    </div>
+                    {historyLog.length === 0 ? (
+                        <div className="text-center py-32 text-gray-400 border-2 border-dashed border-gray-200 rounded-3xl bg-white/80 backdrop-blur">
+                            <Icon path={icons.history} className="w-16 h-16 mx-auto mb-4 text-gray-300"/>
+                            <p className="text-xl font-bold">尚無戰役紀錄</p>
+                            <p className="text-sm mt-2">快去挑戰吧！</p>
+                        </div>
+                    ) : (
+                        <div className="bg-white/95 backdrop-blur-md rounded-3xl shadow-lg overflow-hidden border border-gray-200">
+                            <table className="w-full text-left border-collapse">
+                                <thead className="bg-amber-50 border-b border-amber-100">
+                                    <tr>
+                                        <th className="p-5 font-black text-amber-900 text-sm uppercase tracking-wider hidden md:table-cell">日期</th>
+                                        <th className="p-5 font-black text-amber-900 text-sm uppercase tracking-wider">主公</th>
+                                        <th className="p-5 font-black text-amber-900 text-sm uppercase tracking-wider">戰功</th>
+                                        <th className="p-5 font-black text-amber-900 text-sm uppercase tracking-wider text-right">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100">
+                                    {historyLog.map(log => (
+                                        <tr key={log.id} className="hover:bg-amber-50/50 transition-colors group">
+                                            <td className="p-5 text-gray-500 text-sm font-mono hidden md:table-cell">{log.date.split(',')[0]}</td>
+                                            <td className="p-5 font-bold text-gray-800">
+                                                <div className="md:hidden text-xs text-gray-400 mb-1">{log.date.split(',')[0]}</div>
+                                                {log.userName}
+                                            </td>
+                                            <td className="p-5">
+                                                <span className={`font-black px-3 py-1 rounded-lg text-sm ${log.score === log.total ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-gray-100 text-gray-700 border border-gray-200'}`}>
+                                                    {log.score} <span className="text-gray-400 font-normal">/ {log.total}</span>
+                                                </span>
+                                            </td>
+                                            <td className="p-5 text-right">
+                                                <button onClick={() => setSelectedLog(log)} className="text-amber-600 hover:text-white hover:bg-amber-600 px-4 py-2 rounded-lg text-sm font-bold transition-all border border-amber-200 hover:border-amber-600">
+                                                    查看
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                     <div className="text-center mt-12 pb-10">
+                         <button onClick={() => {if(confirm('確定焚毀所有戰報？此操作無法復原！')) setHistoryLog([])}} className="text-red-400 hover:text-red-600 text-sm flex items-center justify-center mx-auto hover:bg-red-50/80 px-4 py-2 rounded-lg transition-colors">
+                             <Icon path={icons.trash} className="w-4 h-4 mr-2"/> 清除所有紀錄
+                        </button>
+                    </div>
+                </div>
+            );
+        };
+
+        const MistakeView = ({ mistakes, mistakeLog, setMistakeLog, onMenu, onReviewAll }) => {
+            return (
+                <div className="max-w-4xl mx-auto px-4 py-8">
+                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
+                        <div className="flex items-center">
+                            <button onClick={onMenu} className="mr-4 p-3 bg-white rounded-xl shadow border border-gray-200 hover:bg-gray-50"><Icon path={icons.left} className="w-5 h-5"/></button>
+                            <h2 className="text-3xl font-black text-gray-800 flex items-center"><Icon path={icons.alert} className="w-8 h-8 text-red-500 mr-3"/> 錯題軍令狀</h2>
+                        </div>
+                        {mistakes.length > 0 && (
+                            <button onClick={onReviewAll} className="w-full md:w-auto px-8 py-3 bg-red-600 text-white rounded-xl shadow-lg hover:bg-red-700 font-bold animate-pulse flex items-center justify-center">
+                                <Icon path={icons.play} className="w-5 h-5 mr-2" fill="currentColor"/>
+                                立即複習 ({mistakes.length})
+                            </button>
+                        )}
+                    </div>
+
+                    {mistakes.length === 0 ? (
+                        <div className="text-center py-32 bg-white/80 backdrop-blur rounded-3xl shadow-sm border border-green-100">
+                            <div className="text-8xl mb-6">🎉</div>
+                            <p className="text-2xl text-gray-800 font-black mb-2">太棒了！</p>
+                            <p className="text-gray-500">目前沒有錯題紀錄，繼續保持！</p>
+                        </div>
+                    ) : (
+                        <div className="grid gap-4">
+                            {mistakes.map(item => { 
+                                const log = mistakeLog.find(m => m.id === item.id); 
+                                return (
+                                    <div key={item.id} className="bg-white/95 backdrop-blur-sm p-6 rounded-2xl shadow-sm border-l-8 border-red-400 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 hover:shadow-md transition-shadow">
+                                        <div>
+                                            <div className="flex items-center gap-3 mb-2">
+                                                <h3 className="text-2xl font-black text-gray-800">{item.term}</h3>
+                                                <span className="text-xs font-bold text-red-600 bg-red-100 px-2 py-1 rounded-md border border-red-200">錯誤 {log.count} 次</span>
+                                            </div>
+                                            <p className="text-gray-600 text-base font-medium">{item.definition}</p>
+                                        </div>
+                                        <div className="text-xs text-gray-400 text-right md:w-32 flex-shrink-0 font-mono">
+                                            最後錯誤:<br/>{new Date(log.lastMissed).toLocaleDateString()}
+                                        </div>
+                                    </div>
+                                ); 
+                            })}
+                        </div>
+                    )}
+                    
+                    {mistakes.length > 0 && (
+                        <div className="text-center mt-12 pb-10">
+                            <button onClick={() => {if(confirm('確定清空錯題本？這將移除所有錯誤紀錄。')) { setMistakeLog([]); localStorage.setItem('idiomMistakes', '[]'); } }} className="text-gray-400 hover:text-gray-600 text-sm hover:bg-gray-100/80 px-4 py-2 rounded-lg transition-colors">
+                                清空錯題本
+                            </button>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const App = () => {
+            const parsedData = useMemo(() => ({ "精選成語": IDIOM_DATA }), []);
+            const allItems = IDIOM_DATA;
+            const categories = ["精選成語"];
+
+            const [currentMode, setCurrentMode] = useState('menu'); 
+            const [activeCategory, setActiveCategory] = useState(null);
+            const [showNameWarning, setShowNameWarning] = useState(false);
+            
+            const [userName, setUserName] = useState('');
+            const [isLocked, setIsLocked] = useState(false);
+            const [lastUser, setLastUser] = useState(() => localStorage.getItem('idiomLastUser'));
+
+            // 背景圖狀態
+            const [bgImage, setBgImage] = useState('');
+
+            // 初始化背景圖
+            useEffect(() => {
+                const randomNum = Math.floor(Math.random() * 5) + 1;
+                setBgImage(`images/san${randomNum}.jpg`);
+            }, []);
+
+            // 狀態初始化與 F5 保護 (Session Restore)
+            useEffect(() => {
+                const savedSessionUser = sessionStorage.getItem('idiomSessionUser');
+                if (savedSessionUser) {
+                    setUserName(savedSessionUser);
+                    setIsLocked(true);
+                }
+            }, []);
+
+            const [favorites, setFavorites] = useState(() => JSON.parse(localStorage.getItem('idiomFavorites')) || []);
+            const [historyLog, setHistoryLog] = useState(() => JSON.parse(localStorage.getItem('idiomHistory')) || []);
+            const [mistakeLog, setMistakeLog] = useState(() => JSON.parse(localStorage.getItem('idiomMistakes')) || []);
+            const [completedDays, setCompletedDays] = useState(() => JSON.parse(localStorage.getItem('idiomCompletedDays')) || []);
+            const [learnPage, setLearnPage] = useState(0);
+
+            const [quizQuestions, setQuizQuestions] = useState([]);
+            const [quizScore, setQuizScore] = useState(0);
+            const [combo, setCombo] = useState(0);
+            const [quizPage, setQuizPage] = useState(0);
+
+            // 存儲副作用
+            useEffect(() => { localStorage.setItem('idiomFavorites', JSON.stringify(favorites)); }, [favorites]);
+            useEffect(() => { localStorage.setItem('idiomHistory', JSON.stringify(historyLog)); }, [historyLog]);
+            useEffect(() => { 
+                if (mistakeLog.length > 0) localStorage.setItem('idiomMistakes', JSON.stringify(mistakeLog)); 
+                else if (mistakeLog.length === 0 && localStorage.getItem('idiomMistakes')) localStorage.removeItem('idiomMistakes');
+            }, [mistakeLog]);
+            useEffect(() => { localStorage.setItem('idiomCompletedDays', JSON.stringify(completedDays)); }, [completedDays]);
+            
+            // Login Handlers
+            const handleLogin = () => {
+                if (userName.trim()) {
+                    setIsLocked(true);
+                    setShowNameWarning(false);
+                    localStorage.setItem('idiomLastUser', userName);
+                    sessionStorage.setItem('idiomSessionUser', userName); 
+                    setLastUser(userName);
+                } else {
+                    setShowNameWarning(true);
+                }
+            };
+
+            const handleQuickLogin = () => {
+                const storedUser = localStorage.getItem('idiomLastUser');
+                if (storedUser) {
+                    setUserName(storedUser);
+                    setIsLocked(true);
+                    setShowNameWarning(false);
+                    sessionStorage.setItem('idiomSessionUser', storedUser);
+                }
+            };
+
+            const handleLogout = () => {
+                if(confirm('確定要登出嗎？')) {
+                    setIsLocked(false);
+                    setUserName('');
+                    sessionStorage.removeItem('idiomSessionUser');
+                }
+            };
+
+            const handleDeleteUser = () => {
+                if (confirm('【危險操作】確定要刪除這位使用者的所有資料嗎？')) {
+                    if (confirm('再次確認：這將會清除所有學習紀錄、收藏和錯題本，且無法復原！確定要執行嗎？')) {
+                        localStorage.removeItem('idiomLastUser');
+                        localStorage.removeItem('idiomFavorites');
+                        localStorage.removeItem('idiomHistory');
+                        localStorage.removeItem('idiomMistakes');
+                        localStorage.removeItem('idiomCompletedDays');
+                        sessionStorage.removeItem('idiomSessionUser');
+                        
+                        setFavorites([]);
+                        setHistoryLog([]);
+                        setMistakeLog([]);
+                        setCompletedDays([]);
+                        setLastUser(null);
+                        setIsLocked(false);
+                        setUserName('');
+                    }
+                }
+            };
+
+            const toggleFavorite = (id) => { 
+                setFavorites(prev => prev.includes(id) ? prev.filter(fid => fid !== id) : [...prev, id]); 
+            };
+            
+            // Sound Effects
+            const playSoundEffect = (type) => {
+                 try {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    if (!AudioContext) return;
+                    const ctx = new AudioContext();
+                    const now = ctx.currentTime;
+                    if (type === 'correct') {
+                        const osc1 = ctx.createOscillator(); const gain1 = ctx.createGain();
+                        osc1.type = 'sine'; osc1.frequency.setValueAtTime(523.25, now); gain1.gain.setValueAtTime(0.1, now); gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.5); osc1.connect(gain1); gain1.connect(ctx.destination); osc1.start(now); osc1.stop(now + 0.5);
+                        const osc2 = ctx.createOscillator(); const gain2 = ctx.createGain();
+                        osc2.type = 'sine'; osc2.frequency.setValueAtTime(659.25, now + 0.1); gain2.gain.setValueAtTime(0.1, now + 0.1); gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.6); osc2.connect(gain2); gain2.connect(ctx.destination); osc2.start(now + 0.1); osc2.stop(now + 0.6);
+                    } else {
+                        const osc = ctx.createOscillator(); const gain = ctx.createGain();
+                        osc.type = 'triangle'; osc.frequency.setValueAtTime(150, now); osc.frequency.exponentialRampToValueAtTime(50, now + 0.3); gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3); osc.connect(gain); gain.connect(ctx.destination); osc.start(now); osc.stop(now + 0.3);
+                    }
+                } catch (e) { console.error("Audio play failed", e); }
+            };
+
+            const handleStartQuiz = (category, pageIdx = 0, isMistakeMode = false) => {
+                if (!isLocked) { setShowNameWarning(true); return; }
+                let questions = [];
+                
+                if (isMistakeMode) {
+                    const mistakeIds = mistakeLog.map(m => m.id);
+                    questions = allItems.filter(i => mistakeIds.includes(i.id));
+                    questions.sort(() => Math.random() - 0.5);
+                } else {
+                    let sourceItems = category === '收藏夾' ? allItems.filter(i => favorites.includes(i.id)) : parsedData["精選成語"];
+                    if (!sourceItems || sourceItems.length === 0) {
+                         alert("此分類尚無內容，請先進行收藏或選擇其他分類！");
+                         return;
+                    }
+                    const start = pageIdx * ITEMS_PER_PAGE;
+                    if (start >= sourceItems.length && pageIdx > 0) {
+                         const correctPage = Math.floor((sourceItems.length - 1) / ITEMS_PER_PAGE);
+                         handleStartQuiz(category, correctPage, isMistakeMode);
+                         return;
+                    }
+                    questions = sourceItems.slice(start, start + ITEMS_PER_PAGE);
+                }
+
+                if (questions.length === 0) {
+                    alert(isMistakeMode ? "太棒了！目前沒有錯題需要複習！" : "此頁面無題目");
+                    return;
+                }
+
+                const quizSet = questions.map(item => {
+                    let pool = allItems.filter(i => i.id !== item.id);
+                    const distractors = pool.sort(() => Math.random() - 0.5).slice(0, 3);
+                    const options = [...distractors, item].sort(() => Math.random() - 0.5);
+                    return { ...item, options, userAnswer: null, isCorrect: null };
+                });
+
+                setQuizQuestions(quizSet);
+                setQuizScore(0);
+                setCombo(0);
+                setQuizPage(pageIdx);
+                setActiveCategory(isMistakeMode ? '錯題本' : category);
+                setCurrentMode('quiz');
+                window.scrollTo(0,0);
+            };
+
+            const handleAnswer = (qIndex, selectedOptionId) => {
+                const newQuestions = [...quizQuestions];
+                const q = newQuestions[qIndex];
+                if (q.userAnswer !== null) return; 
+
+                const isCorrect = selectedOptionId === q.id;
+                q.userAnswer = selectedOptionId;
+                q.isCorrect = isCorrect;
+
+                if (isCorrect) {
+                    setQuizScore(s => s + 1);
+                    setCombo(c => c + 1);
+                    playSoundEffect('correct');
+                    if (combo > 0 && (combo + 1) % 5 === 0) {
+                         confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+                    } else {
+                         confetti({ particleCount: 30, spread: 50, origin: { y: 0.7 }, scalar: 0.7 });
+                    }
+                } else {
+                    setCombo(0);
+                    playSoundEffect('wrong');
+                    setMistakeLog(prev => {
+                        const existing = prev.find(m => m.id === q.id);
+                        const newLog = existing 
+                            ? prev.map(m => m.id === q.id ? { ...m, count: m.count + 1, lastMissed: new Date().toISOString() } : m) 
+                            : [...prev, { id: q.id, count: 1, lastMissed: new Date().toISOString() }];
+                        return newLog;
+                    });
+                }
+                setQuizQuestions(newQuestions);
+            };
+
+            const finishQuiz = () => {
+                const record = { 
+                    id: Date.now(), 
+                    date: new Date().toLocaleString(), 
+                    userName, 
+                    score: quizScore, 
+                    total: quizQuestions.length, 
+                    category: activeCategory, 
+                    details: quizQuestions.map(q => ({ 
+                        term: q.term, 
+                        definition: q.definition, 
+                        sentence: q.sentence2, // 修正：紀錄測驗用例句
+                        isCorrect: q.isCorrect, 
+                        userAnswer: q.options.find(o => o.id === q.userAnswer)?.term || "未作答", 
+                        correctAnswer: q.term 
+                    })) 
+                };
+                setHistoryLog(prev => [record, ...prev]);
+                if (activeCategory !== '收藏夾' && activeCategory !== '錯題本') { 
+                    const key = `${activeCategory}-${quizPage}`; 
+                    if (!completedDays.includes(key) && quizScore > 0) { 
+                        setCompletedDays(prev => [...prev, key]); 
+                    } 
+                }
+            };
+
+            return (
+                <div className="min-h-screen font-sans selection:bg-amber-200 selection:text-amber-900 relative">
+                    {/* Background Layer */}
+                    <div 
+                        className="fixed inset-0 z-0 bg-cover bg-center transition-all duration-1000"
+                        style={{ 
+                            backgroundImage: `url('${bgImage}')`,
+                            backgroundColor: '#fcf9f2' 
+                        }}
+                    ></div>
+                    {/* Overlay for Readability */}
+                    <div className="fixed inset-0 z-0 bg-white/70 backdrop-blur-[2px]"></div>
+
+                    {/* Main Content Area */}
+                    <div className="relative z-10">
+                        {currentMode === 'menu' && (
+                            <MenuView 
+                                userName={userName} setUserName={setUserName} showNameWarning={showNameWarning}
+                                mistakeLog={mistakeLog} favorites={favorites} parsedData={parsedData}
+                                onStartLearn={(cat) => { setActiveCategory(cat); setLearnPage(0); setCurrentMode('learn'); }}
+                                onStartQuiz={(cat) => handleStartQuiz(cat, 0)}
+                                onViewHistory={() => setCurrentMode('history')}
+                                onViewMistakes={() => setCurrentMode('mistakes')}
+                                onViewTable={() => setCurrentMode('table')}
+                                onLogin={handleLogin} isLocked={isLocked} onQuickLogin={handleQuickLogin} lastUser={lastUser}
+                                onLogout={handleLogout} onDeleteUser={handleDeleteUser}
+                            />
+                        )}
+                        {currentMode === 'learn' && (
+                            <LearnView 
+                                items={activeCategory === '收藏夾' ? allItems.filter(i => favorites.includes(i.id)) : parsedData["精選成語"]}
+                                learnPage={learnPage} setLearnPage={setLearnPage}
+                                favorites={favorites} toggleFavorite={toggleFavorite}
+                                completedDays={completedDays}
+                                onMenu={() => setCurrentMode('menu')}
+                            />
+                        )}
+                        {currentMode === 'quiz' && (
+                            <QuizView 
+                                questions={quizQuestions} score={quizScore} userName={userName} combo={combo}
+                                onAnswer={handleAnswer} onFinish={finishQuiz}
+                                onMenu={() => setCurrentMode('menu')}
+                                onViewHistory={() => setCurrentMode('history')}
+                                favorites={favorites} toggleFavorite={toggleFavorite}
+                                activeCategory={activeCategory}
+                                totalItems={activeCategory === '收藏夾' ? favorites.length : parsedData["精選成語"].length}
+                                quizPage={quizPage}
+                                onPageChange={(page) => handleStartQuiz(activeCategory, page)}
+                                completedDays={completedDays}
+                            />
+                        )}
+                        {currentMode === 'history' && <HistoryView historyLog={historyLog} setHistoryLog={setHistoryLog} onMenu={() => setCurrentMode('menu')} />}
+                        {currentMode === 'mistakes' && (
+                            <MistakeView 
+                                mistakes={allItems.filter(i => mistakeLog.some(m => m.id === i.id))}
+                                mistakeLog={mistakeLog} setMistakeLog={setMistakeLog}
+                                onMenu={() => setCurrentMode('menu')}
+                                onReviewAll={() => handleStartQuiz(null, 0, true)}
+                            />
+                        )}
+                        {currentMode === 'table' && (
+                            <TableView 
+                                items={allItems}
+                                onMenu={() => setCurrentMode('menu')}
+                            />
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
