@@ -200,10 +200,10 @@
         // ==========================================
         //  常數與資料
         // ==========================================
-        const COLLECTION_NAME = 'Chineseidiom3'; 
+        const COLLECTION_NAME = 'ChineseIdiom3_Data'; 
         const DOC_GLOBAL = 'global_users';
         const MUSIC_CONFIG = { username: 'nicktsai88', repo: 'Music', folder: '' };
-        const ITEMS_PER_PAGE = 20;
+        const ITEMS_PER_PAGE = 15;
 
         // --- 完整成語資料庫 ---
         let IDIOM_DATA = [
@@ -384,6 +384,7 @@
         ];
 
         // 自動生成測試資料 (修正版：確保 ID 不重複)
+        // 修正重點：找出目前最大 ID，從該 ID + 1 開始生成
         if (IDIOM_DATA.length < 50) {
             let nextId = Math.max(...IDIOM_DATA.map(item => item.id)) + 1;
             while (IDIOM_DATA.length < 200) {
@@ -1099,58 +1100,14 @@
             };
 
             const handleAnswer = (qIndex, selectedOptionId) => {
-                const newQuestions = [...quizQuestions];
-                const q = newQuestions[qIndex];
+                const newQuestions = [...quizQuestions]; const q = newQuestions[qIndex];
                 if (q.userAnswer !== null) return; 
-                
-                const isCorrect = selectedOptionId === q.id;
-                q.userAnswer = selectedOptionId;
-                q.isCorrect = isCorrect;
-                
-                let newScore = quizScore;
-                let newCombo = combo;
-
-                if (isCorrect) {
-                    newScore = quizScore + 1;
-                    newCombo = combo + 1;
-                    setQuizScore(newScore);
-                    setCombo(newCombo);
-                    playSoundEffect('correct');
-                    
-                    // Logic for confetti
-                    if (newCombo > 0 && newCombo % 5 === 0) {
-                        // Big confetti for combo x5, x10...
-                        confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
-                    } else {
-                        // Small confetti for normal correct answers
-                        confetti({ particleCount: 30, spread: 50, origin: { y: 0.7 }, scalar: 0.7 });
-                    }
-                } else {
-                    newCombo = 0;
-                    setCombo(0);
-                    playSoundEffect('wrong');
-                    const newMistakeLog = [...mistakeLog];
-                    const existingIndex = newMistakeLog.findIndex(m => m.id === q.id);
-                    if (existingIndex > -1) { 
-                        newMistakeLog[existingIndex] = { ...newMistakeLog[existingIndex], count: newMistakeLog[existingIndex].count + 1, lastMissed: new Date().toISOString() }; 
-                    } else { 
-                        newMistakeLog.push({ id: q.id, count: 1, lastMissed: new Date().toISOString() }); 
-                    }
-                    setMistakeLog(newMistakeLog);
-                    updateUserData('mistakes', newMistakeLog);
-                }
+                const isCorrect = selectedOptionId === q.id; q.userAnswer = selectedOptionId; q.isCorrect = isCorrect;
+                let newScore = quizScore; let newCombo = combo;
+                if (isCorrect) { newScore++; newCombo++; setQuizScore(newScore); setCombo(newCombo); playSoundEffect('correct'); if (newCombo > 0 && (newCombo + 1) % 5 === 0) confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } }); } 
+                else { newCombo = 0; setCombo(0); playSoundEffect('wrong'); const newMistakeLog = [...mistakeLog]; const existingIndex = newMistakeLog.findIndex(m => m.id === q.id); if (existingIndex > -1) { newMistakeLog[existingIndex] = { ...newMistakeLog[existingIndex], count: newMistakeLog[existingIndex].count + 1, lastMissed: new Date().toISOString() }; } else { newMistakeLog.push({ id: q.id, count: 1, lastMissed: new Date().toISOString() }); } setMistakeLog(newMistakeLog); updateUserData('mistakes', newMistakeLog); }
                 setQuizQuestions(newQuestions);
-                
-                if (activeCategory !== '錯題本') {
-                    updateUserData('currentQuizSession', {
-                        questions: newQuestions,
-                        score: newScore,
-                        combo: newCombo,
-                        category: activeCategory,
-                        pageIdx: quizPage,
-                        timestamp: new Date().toISOString()
-                    });
-                }
+                if (activeCategory !== '錯題本') { updateUserData('currentQuizSession', { questions: newQuestions, score: newScore, combo: newCombo, category: activeCategory, pageIdx: quizPage, timestamp: new Date().toISOString() }); }
             };
 
             const finishQuiz = () => {
