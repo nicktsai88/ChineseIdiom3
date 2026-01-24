@@ -38,8 +38,8 @@
         }
         
         /* 捲軸美化 */
-        ::-webkit-scrollbar { width: 10px; height: 10px; }
-        ::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.05); }
+        ::-webkit-scrollbar { width: 10px; }
+        ::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.5); }
         ::-webkit-scrollbar-thumb { background: #d4c4a8; border-radius: 5px; }
         ::-webkit-scrollbar-thumb:hover { background: #b09b7c; }
         
@@ -118,7 +118,8 @@
         .status-error { background-color: #ef4444; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
         
-        /* 移除 no-scrollbar 類別定義，確保捲軸能顯示 */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
         /* 列印專用樣式 */
         @media print {
@@ -181,6 +182,7 @@
   appId: "1:76289812052:web:898384a916f9f341f62fc1"
 };
 
+
         // Firebase Initialization
         let db;
         let auth;
@@ -206,9 +208,7 @@
         const ITEMS_PER_PAGE = 20;
 
         // --- 完整成語資料庫 ---
-        // 注意：為了讓您能預覽多卷效果，若您的資料只有預設的 2 筆，下方程式碼會自動生成測試資料補足到 200 筆。
-        // 請您之後直接將完整的 IDIOM_DATA 陣列貼上覆蓋此處即可。
-        let IDIOM_DATA = [
+        const IDIOM_DATA = [
             { id: 1, term: "飲水思源", definition: "喝水時想到水的來源。比喻不忘本，感激別人的恩德。", sentence1: "做人要飲水思源，對於曾經幫助過我們的人，絕對不能忘恩負義。", sentence2: "校慶時，傑出校友們紛紛回校捐款，展現了飲水思源的精神。", scene: "喝水時想到水源，比喻不忘本。" },
             { id: 2, term: "杯水車薪", definition: "用一杯水去救一車著了火的柴草。比喻力量太小，無濟於事。", sentence1: "對於這龐大的債務來說，這點錢不過是杯水車薪，解決不了問題。", sentence2: "乾旱如此嚴重，這場小雨簡直是杯水車薪，無法解除缺水危機。", scene: "一杯水救一車火，力量太小。" },
             { id: 3, term: "背水一戰", definition: "比喻抱著必死的決心，奮戰取勝。", sentence1: "面對強敵，球隊決定背水一戰，希望能爭取最後的晉級機會。", sentence2: "這次考試是我最後的機會，我必須背水一戰，全力以赴。", scene: "背對河流作戰，比喻決一死戰。" },
@@ -385,21 +385,7 @@
             { id: 174, term: "一帆風順", definition: "船掛滿帆，順風行駛。比喻事情非常順利，沒有阻礙。", sentence1: "祝你未來的事業一帆風順，鵬程萬里。", sentence2: "人生不可能永遠一帆風順，總會遇到一些挫折。", scene: "旅程或事情非常順利。" }
         ];
 
-        // 自動生成測試資料 (當資料不足時觸發，確保您可以測試分頁功能)
-        if (IDIOM_DATA.length < 50) {
-            for (let i = IDIOM_DATA.length + 1; i <= 200; i++) {
-                IDIOM_DATA.push({
-                    id: i,
-                    term: i % 5 === 0 ? `半途而廢，前功盡棄${i}` : `測試成語${i}`, // 模擬一些長句或成語
-                    definition: `這是第 ${i} 條測試成語的釋義。`,
-                    sentence1: `這是第 ${i} 條測試成語的例句一，用來展示應用範例。`,
-                    sentence2: `這是第 ${i} 條測試成語的例句二，用來作為測驗題目。`,
-                    scene: `測試場景 ${i}`
-                });
-            }
-        }
-
-        // --- Icons ---
+        // --- Icons (已修復 JSX 語法錯誤) ---
         const icons = {
             check: <polyline points="20 6 9 17 4 12" />,
             play: <polygon points="5 3 19 12 5 21 5 3" />,
@@ -882,8 +868,7 @@
                             <button onClick={onMenu} className="text-gray-500 hover:text-gray-900 flex items-center whitespace-nowrap bg-gray-100 px-3 py-2 rounded-lg font-bold"><Icon path={icons.menu} className="w-5 h-5 mr-2"/> 選單</button>
                             <h2 className="text-2xl font-black flex items-center whitespace-nowrap text-amber-900">📖 典故卷軸</h2>
                         </div>
-                        {/* 修正：移除 no-scrollbar，改為顯示捲軸以便操作 */}
-                        <div className="flex overflow-x-auto max-w-full w-full md:w-auto pb-2 md:pb-0 gap-2 mt-2 md:mt-0">
+                        <div className="flex overflow-x-auto max-w-full w-full md:w-auto pb-2 md:pb-0 gap-2 mt-2 md:mt-0 no-scrollbar">
                             {Array.from({ length: totalPages }).map((_, i) => (<button key={i} onClick={() => setLearnPage(i)} className={`px-4 py-2 rounded-lg text-sm font-bold whitespace-nowrap flex items-center gap-2 transition-all flex-shrink-0 ${learnPage === i ? 'bg-amber-600 text-white shadow-md transform scale-105' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>卷 {i + 1} {completedDays.includes(`精選成語-${i}`) && <span className="bg-green-400 text-white text-[10px] px-1.5 py-0.5 rounded-full">✓</span>}</button>))}
                         </div>
                     </div>
@@ -931,8 +916,7 @@
                 <div className="max-w-4xl mx-auto pb-20 px-4 mt-12 no-print">
                     <div className="bg-white/95 backdrop-blur shadow-sm p-4 rounded-b-2xl mb-8 sticky top-16 z-30 border-t-4 border-amber-500 flex flex-col md:flex-row justify-between items-center transition-all">
                         <div className="flex items-center gap-4 mb-4 md:mb-0 w-full md:w-auto justify-between md:justify-start"><button onClick={onMenu} className="text-gray-500 text-sm flex items-center hover:text-red-600 font-bold bg-gray-100 px-3 py-2 rounded-lg transition-colors"><Icon path={icons.left} className="w-4 h-4 mr-1"/> 撤退</button><div className="font-bold text-xl flex items-center gap-3"><span>{userName}</span><span className="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm font-black border border-amber-200">戰功: {score}</span></div></div>
-                        {/* 修正：移除 no-scrollbar */}
-                        <div className="flex overflow-x-auto max-w-full w-full md:w-auto pb-1 md:pb-0 gap-2">{Array.from({ length: totalPages }).map((_, i) => (<button key={i} onClick={() => onPageChange(i)} className={`px-3 py-1.5 rounded-md text-xs font-bold whitespace-nowrap flex items-center gap-1 transition-all flex-shrink-0 ${quizPage === i ? 'bg-amber-600 text-white shadow-md' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>卷{i + 1}{completedDays.includes(`精選成語-${i}`) && <span className="bg-green-400 text-white text-[10px] w-3 h-3 flex items-center justify-center rounded-full">✓</span>}</button>))}</div>
+                        <div className="flex overflow-x-auto max-w-full w-full md:w-auto pb-1 md:pb-0 gap-2 no-scrollbar">{Array.from({ length: totalPages }).map((_, i) => (<button key={i} onClick={() => onPageChange(i)} className={`px-3 py-1.5 rounded-md text-xs font-bold whitespace-nowrap flex items-center gap-1 transition-all flex-shrink-0 ${quizPage === i ? 'bg-amber-600 text-white shadow-md' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>卷{i + 1}{completedDays.includes(`精選成語-${i}`) && <span className="bg-green-400 text-white text-[10px] w-3 h-3 flex items-center justify-center rounded-full">✓</span>}</button>))}</div>
                     </div>
                     <div className="space-y-8">
                         {questions.map((q, idx) => (
