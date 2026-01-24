@@ -104,8 +104,8 @@
         //  設定區塊 (Music Config)
         // ==========================================
         const MUSIC_CONFIG = {
-            username: 'nicktsai88',  // 您的 GitHub 帳號
-            repo: 'Music',         // 您的儲存庫名稱
+            username: 'Kevin0980576',  // 您的 GitHub 帳號
+            repo: 'MusicRepo',         // 您的儲存庫名稱
             folder: 'bgm'              // 若在根目錄請留空，例如 'music'
         };
 
@@ -253,20 +253,17 @@
             const [isPlaying, setIsPlaying] = useState(false);
             const [volume, setVolume] = useState(0.5);
             const [hasInteracted, setHasInteracted] = useState(false);
-            const [status, setStatus] = useState('loading'); // loading, ready, empty, error
             const audioRef = useRef(null);
 
             // 暴露播放方法給父組件
             useImperativeHandle(ref, () => ({
                 triggerPlay: () => {
-                    if (playlist.length === 0) return;
-                    
                     if (!hasInteracted) {
                         setHasInteracted(true);
-                        if (audioRef.current) {
+                        if (audioRef.current && playlist.length > 0) {
                             audioRef.current.play().then(() => setIsPlaying(true)).catch(e => console.log("Autoplay blocked", e));
                         }
-                    } else if (!isPlaying) {
+                    } else if (!isPlaying && playlist.length > 0) {
                         audioRef.current.play().then(() => setIsPlaying(true)).catch(console.error);
                     }
                 }
@@ -275,12 +272,8 @@
             // Fetch Music from GitHub
             useEffect(() => {
                 const fetchMusic = async () => {
-                    if (!MUSIC_CONFIG.username || !MUSIC_CONFIG.repo) {
-                        setStatus('error');
-                        return;
-                    }
+                    if (!MUSIC_CONFIG.username || !MUSIC_CONFIG.repo) return;
                     try {
-                        setStatus('loading');
                         const url = `https://api.github.com/repos/${MUSIC_CONFIG.username}/${MUSIC_CONFIG.repo}/contents/${MUSIC_CONFIG.folder}`;
                         const res = await fetch(url);
                         if (!res.ok) throw new Error('Network response was not ok');
@@ -301,13 +294,9 @@
                                 [tracks[i], tracks[j]] = [tracks[j], tracks[i]];
                             }
                             setPlaylist(tracks);
-                            setStatus('ready');
-                        } else {
-                            setStatus('empty');
                         }
                     } catch (error) {
                         console.error("Failed to fetch music:", error);
-                        setStatus('error');
                     }
                 };
                 fetchMusic();
@@ -326,7 +315,7 @@
             };
 
             const togglePlay = () => {
-                if (!audioRef.current || playlist.length === 0) return;
+                if (!audioRef.current) return;
                 if (isPlaying) {
                     audioRef.current.pause();
                 } else {
@@ -349,37 +338,28 @@
                 setIsPlaying(true);
             };
 
-            const currentTrack = playlist[currentIndex];
-            
-            // 決定跑馬燈文字
-            let marqueeText = "";
-            if (status === 'loading') marqueeText = "⏳ 正在讀取 GitHub 音樂清單...";
-            else if (status === 'error') marqueeText = "⚠️ 無法讀取音樂 (請檢查上方 MUSIC_CONFIG 設定是否正確)";
-            else if (status === 'empty') marqueeText = "⚠️ 資料夾中找不到 MP3 檔案";
-            else marqueeText = `🎵 ${currentTrack.title} 🎵 ${currentTrack.title}`;
+            if (playlist.length === 0) return null; // Don't render if no music
 
-            const isReady = status === 'ready';
+            const currentTrack = playlist[currentIndex];
 
             return (
-                <div className="fixed top-0 left-1/2 transform -translate-x-1/2 z-50 bg-amber-900/95 backdrop-blur-md text-amber-50 px-6 py-3 rounded-b-xl shadow-2xl border-x border-b border-amber-600/50 flex flex-col items-center min-w-[320px] transition-all duration-300">
-                    {isReady && (
-                        <audio 
-                            ref={audioRef} 
-                            src={currentTrack.src} 
-                            onEnded={handleEnded} 
-                            autoPlay={isPlaying}
-                        />
-                    )}
+                <div className="fixed top-0 left-1/2 transform -translate-x-1/2 z-50 bg-amber-900/90 backdrop-blur-md text-amber-50 px-4 py-2 rounded-b-xl shadow-xl border-x border-b border-amber-600/50 flex flex-col items-center min-w-[300px] transition-all duration-300">
+                    <audio 
+                        ref={audioRef} 
+                        src={currentTrack.src} 
+                        onEnded={handleEnded} 
+                        autoPlay={isPlaying}
+                    />
                     
                     {/* Marquee Title */}
-                    <div className="w-full overflow-hidden mb-3 relative h-6 bg-black/20 rounded-md flex items-center">
-                        <div className={`absolute whitespace-nowrap font-bold text-amber-200 text-sm ${isReady ? 'animate-marquee' : 'left-2'}`}>
-                            {marqueeText}
+                    <div className="w-full overflow-hidden mb-2 relative h-6">
+                        <div className="absolute whitespace-nowrap animate-marquee font-bold text-amber-200">
+                            🎵 {currentTrack.title} &nbsp;&nbsp;&nbsp;&nbsp; 🎵 {currentTrack.title} &nbsp;&nbsp;&nbsp;&nbsp;
                         </div>
                     </div>
 
                     {/* Controls */}
-                    <div className={`flex items-center gap-4 w-full justify-between ${!isReady ? 'opacity-50 pointer-events-none' : ''}`}>
+                    <div className="flex items-center gap-4 w-full justify-between">
                          {/* Volume */}
                         <div className="flex items-center gap-2 group">
                             <button onClick={() => setVolume(v => v === 0 ? 0.5 : 0)} className="hover:text-amber-300">
@@ -395,11 +375,11 @@
                         </div>
 
                         {/* Playback Buttons */}
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-3">
                             <button onClick={playPrev} className="hover:text-amber-300 transition-transform active:scale-90">
                                 <Icon path={icons.skipBack} className="w-5 h-5" fill="currentColor"/>
                             </button>
-                            <button onClick={togglePlay} className="bg-amber-100 text-amber-900 rounded-full p-2 hover:bg-white transition-transform active:scale-95 shadow-md">
+                            <button onClick={togglePlay} className="bg-amber-100 text-amber-900 rounded-full p-1 hover:bg-white transition-transform active:scale-95 shadow-md">
                                 <Icon path={isPlaying ? icons.pause : icons.play} className="w-6 h-6" fill="currentColor"/>
                             </button>
                             <button onClick={playNext} className="hover:text-amber-300 transition-transform active:scale-90">
@@ -569,8 +549,8 @@
                             <table className="w-full text-left border-collapse prose-table">
                                 <thead className="bg-purple-50 sticky top-0 z-10 shadow-sm">
                                     <tr>
-                                        <th className="p-2 font-black text-purple-900 border-b-2 border-purple-100 w-14 text-center">收藏</th>
-                                        <th className="p-2 font-black text-purple-900 border-b-2 border-purple-100 w-16 text-center">編號</th>
+                                        <th className="p-2 font-black text-purple-900 border-b-2 border-purple-100 w-12 text-center">收藏</th>
+                                        <th className="p-2 font-black text-purple-900 border-b-2 border-purple-100 w-14 text-center">編號</th>
                                         <th className="p-4 font-black text-purple-900 border-b-2 border-purple-100 w-48">成語名稱</th>
                                         <th className="p-4 font-black text-purple-900 border-b-2 border-purple-100">釋義</th>
                                         <th className="p-4 font-black text-purple-900 border-b-2 border-purple-100 w-96">應用範例</th>
