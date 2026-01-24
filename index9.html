@@ -60,7 +60,7 @@
         }
         .animate-shake { animation: shake 0.4s ease-in-out; }
         
-       /* 跑馬燈動畫 */
+       /* 跑馬燈動畫 (優化版) */
         @keyframes marquee {
             0% { left: 100%; transform: translateX(0); }
             100% { left: 0; transform: translateX(-100%); }
@@ -77,18 +77,23 @@
         /* 圖片容器互動 */
         .group-img:hover img { transform: scale(1.08); }
         
-        /* 禁止選取文字 */
+        /* 禁止選取文字 (用於按鈕) */
         .no-select { user-select: none; -webkit-user-select: none; }
 
         /* 表格響應式優化 */
-        .table-container { overflow-x: auto; }
-        .prose-table td, .prose-table th { white-space: pre-wrap; min-width: 120px; }
+        .table-container {
+            overflow-x: auto;
+        }
+        .prose-table td, .prose-table th {
+            white-space: pre-wrap; /* 允許文字換行 */
+            min-width: 120px;
+        }
         
         /* 音量滑桿自訂樣式 */
         .volume-slider {
             -webkit-appearance: none;
             height: 4px;
-            background: #e5e7eb;
+            background: #e5e7eb; /* gray-200 */
             border-radius: 2px;
             outline: none;
         }
@@ -97,12 +102,14 @@
             width: 12px;
             height: 12px;
             border-radius: 50%;
-            background: #FF8800;
+            background: #FF8800; /* 主題色 */
             cursor: pointer;
             box-shadow: 0 1px 2px rgba(0,0,0,0.2);
             transition: transform 0.1s;
         }
-        .volume-slider::-webkit-slider-thumb:hover { transform: scale(1.2); }
+        .volume-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
 
         /* 雲端狀態燈號 */
         .status-dot {
@@ -113,24 +120,27 @@
             margin-right: 6px;
             box-shadow: 0 0 5px rgba(0,0,0,0.2);
         }
-        .status-loading { background-color: #fbbf24; animation: pulse 1.5s infinite; }
-        .status-success { background-color: #22c55e; }
-        .status-error { background-color: #ef4444; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-        
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .status-loading { background-color: #fbbf24; animation: pulse 1.5s infinite; } /* Amber */
+        .status-success { background-color: #22c55e; } /* Green */
+        .status-error { background-color: #ef4444; } /* Red */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        /* 隱藏捲軸但保留功能 */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
 
         /* 列印專用樣式 */
         @media print {
             @page {
                 size: A4 portrait;
-                margin: 0; /* 控制由 CSS 處理 */
-            }
-            body {
-                background: white;
-                margin: 0;
-                padding: 0;
+                margin: 1.5cm;
             }
             body * {
                 visibility: hidden;
@@ -142,17 +152,10 @@
                 position: absolute;
                 left: 0;
                 top: 0;
-                width: 210mm; /* A4 width */
-                font-family: "標楷體", "DFKai-SB", serif;
-            }
-            .a4-page {
-                width: 210mm;
-                height: 297mm; /* A4 height */
-                padding: 20mm;
-                page-break-after: always;
-                position: relative;
-                overflow: hidden;
+                width: 100%;
                 background: white;
+                color: black;
+                font-family: "標楷體", "DFKai-SB", serif; /* 考卷常用字體 */
             }
             .no-print {
                 display: none !important;
@@ -171,7 +174,7 @@
         import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 
         // ==========================================
-        //  Firebase 設定 (請填入您的 Key)
+        //  Firebase 設定 (請在此填入您的 Key)
         // ==========================================
         const firebaseConfig = {
   apiKey: "AIzaSyAxQFt76ZPXE7d0i1XeNZ1yiiD2WYNIfHs",
@@ -181,7 +184,6 @@
   messagingSenderId: "76289812052",
   appId: "1:76289812052:web:898384a916f9f341f62fc1"
 };
-
 
         // Firebase Initialization
         let db;
@@ -200,11 +202,17 @@
         }
 
         // ==========================================
-        //  常數與資料
+        //  常數設定
         // ==========================================
         const COLLECTION_NAME = 'ChineseIdiom3_Data'; 
         const DOC_GLOBAL = 'global_users';
-        const MUSIC_CONFIG = { username: 'nicktsai88', repo: 'Music', folder: '' };
+        
+        const MUSIC_CONFIG = {
+            username: 'nicktsai88',  
+            repo: 'Music',         
+            folder: ''              
+        };
+
         const ITEMS_PER_PAGE = 15;
 
         // --- 完整成語資料庫 ---
@@ -385,7 +393,7 @@
             { id: 174, term: "一帆風順", definition: "船掛滿帆，順風行駛。比喻事情非常順利，沒有阻礙。", sentence1: "祝你未來的事業一帆風順，鵬程萬里。", sentence2: "人生不可能永遠一帆風順，總會遇到一些挫折。", scene: "旅程或事情非常順利。" }
         ];
 
-        // --- Icons (已修復 JSX 語法錯誤) ---
+        // --- Icons (Fixed syntax error in print icon) ---
         const icons = {
             check: <polyline points="20 6 9 17 4 12" />,
             play: <polygon points="5 3 19 12 5 21 5 3" />,
@@ -441,131 +449,191 @@
 
             useEffect(() => {
                 const fetchMusic = async () => {
-                    if (!MUSIC_CONFIG.username || !MUSIC_CONFIG.repo) { setStatus('error'); return; }
+                    if (!MUSIC_CONFIG.username || !MUSIC_CONFIG.repo) {
+                        setStatus('error');
+                        return;
+                    }
                     try {
                         setStatus('loading');
                         const url = `https://api.github.com/repos/${MUSIC_CONFIG.username}/${MUSIC_CONFIG.repo}/contents/${MUSIC_CONFIG.folder}`;
                         const res = await fetch(url);
                         if (!res.ok) throw new Error('Network response was not ok');
                         const data = await res.json();
-                        const tracks = data.filter(item => item.name.endsWith('.mp3')).map(item => ({ title: item.name.replace(/\.mp3$/i, ''), src: item.download_url }));
+                        
+                        const tracks = data
+                            .filter(item => item.name.endsWith('.mp3'))
+                            .map(item => ({
+                                title: item.name.replace(/\.mp3$/i, ''),
+                                src: item.download_url
+                            }));
+
                         if (tracks.length > 0) {
                             for (let i = tracks.length - 1; i > 0; i--) {
                                 const j = Math.floor(Math.random() * (i + 1));
                                 [tracks[i], tracks[j]] = [tracks[j], tracks[i]];
                             }
-                            setPlaylist(tracks); setStatus('ready');
-                        } else { setStatus('empty'); }
-                    } catch (error) { setStatus('error'); }
+                            setPlaylist(tracks);
+                            setStatus('ready');
+                        } else {
+                            setStatus('empty');
+                        }
+                    } catch (error) {
+                        console.error("Failed to fetch music:", error);
+                        setStatus('error');
+                    }
                 };
                 fetchMusic();
             }, []);
 
-            useEffect(() => { if (audioRef.current) audioRef.current.volume = volume; }, [volume]);
-            const handleEnded = () => { if (playlist.length === 0) return; setCurrentIndex((currentIndex + 1) % playlist.length); setIsPlaying(true); };
-            const togglePlay = () => { if (!audioRef.current || playlist.length === 0) return; if (isPlaying) audioRef.current.pause(); else audioRef.current.play(); setIsPlaying(!isPlaying); };
-            const playNext = () => { if (playlist.length === 0) return; setCurrentIndex((currentIndex + 1) % playlist.length); setIsPlaying(true); };
-            const playPrev = () => { if (playlist.length === 0) return; setCurrentIndex((currentIndex - 1 + playlist.length) % playlist.length); setIsPlaying(true); };
+            useEffect(() => {
+                if (audioRef.current) {
+                    audioRef.current.volume = volume;
+                }
+            }, [volume]);
+
+            const handleEnded = () => {
+                playNext();
+            };
+
+            const togglePlay = () => {
+                if (!audioRef.current || playlist.length === 0) return;
+                if (isPlaying) {
+                    audioRef.current.pause();
+                } else {
+                    audioRef.current.play();
+                }
+                setIsPlaying(!isPlaying);
+            };
+
+            const playNext = () => {
+                if (playlist.length === 0) return;
+                const nextIndex = (currentIndex + 1) % playlist.length;
+                setCurrentIndex(nextIndex);
+                setIsPlaying(true);
+            };
+
+            const playPrev = () => {
+                if (playlist.length === 0) return;
+                const prevIndex = (currentIndex - 1 + playlist.length) % playlist.length;
+                setCurrentIndex(prevIndex);
+                setIsPlaying(true);
+            };
+
             const currentTrack = playlist[currentIndex];
+            
+            let marqueeText = "";
+            if (status === 'loading') marqueeText = "⏳ 讀取中...";
+            else if (status === 'error') marqueeText = "⚠️ 設定錯誤";
+            else if (status === 'empty') marqueeText = "⚠️ 無檔案";
+            else marqueeText = `🎵 ${currentTrack.title} 🎵 ${currentTrack.title}`;
+
             const isReady = status === 'ready';
             const themeColor = '#FF8800';
 
             return (
                 <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-white/95 backdrop-blur-md px-5 py-2.5 rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-gray-100 flex items-center gap-4 transition-all duration-300 hover:shadow-[0_12px_40px_rgb(0,0,0,0.15)] no-print">
-                    {isReady && <audio ref={audioRef} src={currentTrack.src} onEnded={handleEnded} autoPlay={isPlaying} />}
+                    {isReady && (
+                        <audio 
+                            ref={audioRef} 
+                            src={currentTrack.src} 
+                            onEnded={handleEnded} 
+                            autoPlay={isPlaying}
+                        />
+                    )}
+                    
                     <div className="w-32 md:w-48 overflow-hidden relative h-6 flex items-center bg-orange-50 rounded-md px-2 border border-orange-100">
-                        <div className={`absolute whitespace-nowrap font-bold text-sm ${isReady ? 'animate-marquee' : 'left-2'}`} style={{ color: themeColor }}>
-                            {status === 'loading' ? "⏳ 讀取中..." : status === 'error' ? "⚠️ 設定錯誤" : status === 'empty' ? "⚠️ 無檔案" : `🎵 ${currentTrack.title} 🎵 ${currentTrack.title}`}
+                        <div 
+                            className={`absolute whitespace-nowrap font-bold text-sm ${isReady ? 'animate-marquee' : 'left-2'}`}
+                            style={{ color: themeColor }}
+                        >
+                            {marqueeText}
                         </div>
                     </div>
+
                     <div className={`flex items-center gap-3 ${!isReady ? 'opacity-50 pointer-events-none' : ''}`}>
                         <div className="flex items-center gap-1 group">
-                            <button onClick={() => setVolume(v => v === 0 ? 0.5 : 0)} className="hover:opacity-80 transition-opacity" style={{ color: themeColor }}><Icon path={volume === 0 ? icons.volumeX : icons.volume} className="w-4 h-4" /></button>
-                            <input type="range" min="0" max="1" step="0.05" value={volume} onChange={(e) => setVolume(parseFloat(e.target.value))} className="w-16 volume-slider opacity-50 group-hover:opacity-100 transition-opacity" />
+                            <button onClick={() => setVolume(v => v === 0 ? 0.5 : 0)} className="hover:opacity-80 transition-opacity" style={{ color: themeColor }}>
+                                <Icon path={volume === 0 ? icons.volumeX : icons.volume} className="w-4 h-4" />
+                            </button>
+                            <input 
+                                type="range" 
+                                min="0" max="1" step="0.05" 
+                                value={volume} 
+                                onChange={(e) => setVolume(parseFloat(e.target.value))}
+                                className="w-16 volume-slider opacity-50 group-hover:opacity-100 transition-opacity"
+                            />
                         </div>
+
                         <div className="flex items-center gap-2 border-l border-gray-200 pl-3">
-                            <button onClick={playPrev} className="hover:opacity-80 transition-transform active:scale-90" style={{ color: themeColor }}><Icon path={icons.skipBack} className="w-5 h-5" fill="currentColor"/></button>
-                            <button onClick={togglePlay} className="rounded-full p-1.5 hover:opacity-90 transition-transform active:scale-95 shadow-md text-white" style={{ backgroundColor: themeColor }}><Icon path={isPlaying ? icons.pause : icons.play} className="w-5 h-5" fill="currentColor"/></button>
-                            <button onClick={playNext} className="hover:opacity-80 transition-transform active:scale-90" style={{ color: themeColor }}><Icon path={icons.skipForward} className="w-5 h-5" fill="currentColor"/></button>
+                            <button onClick={playPrev} className="hover:opacity-80 transition-transform active:scale-90" style={{ color: themeColor }}>
+                                <Icon path={icons.skipBack} className="w-5 h-5" fill="currentColor"/>
+                            </button>
+                            <button onClick={togglePlay} className="rounded-full p-1.5 hover:opacity-90 transition-transform active:scale-95 shadow-md text-white" style={{ backgroundColor: themeColor }}>
+                                <Icon path={isPlaying ? icons.pause : icons.play} className="w-5 h-5" fill="currentColor"/>
+                            </button>
+                            <button onClick={playNext} className="hover:opacity-80 transition-transform active:scale-90" style={{ color: themeColor }}>
+                                <Icon path={icons.skipForward} className="w-5 h-5" fill="currentColor"/>
+                            </button>
                         </div>
                     </div>
                 </div>
             );
         });
 
-        // -- New Component: PrintView --
+        // -- Components --
+
         const PrintView = ({ items, onMenu }) => {
-            const chunkSize = 20; // 配合關卡數，每頁20題
-            const chunks = [];
-            for (let i = 0; i < items.length; i += chunkSize) {
-                chunks.push(items.slice(i, i + chunkSize));
-            }
+            useEffect(() => {
+                // 自動觸發列印，使用者可取消
+                // window.print();
+            }, []);
 
             return (
-                <div id="print-area" className="w-full bg-white text-black">
-                    {/* Control Bar (No Print) */}
+                <div id="print-area" className="w-full bg-white p-8">
+                    <div className="text-center mb-8 border-b-2 border-black pb-4 no-print-border">
+                        <h1 className="text-3xl font-black font-serif tracking-widest mb-2">成語大師 - 隨堂測驗</h1>
+                        <div className="flex justify-between items-end mt-4 text-sm font-bold">
+                            <span>班級：__________</span>
+                            <span>姓名：__________</span>
+                            <span>座號：__________</span>
+                            <span>得分：__________</span>
+                        </div>
+                    </div>
+                    
+                    {/* 控制列 (不列印) */}
                     <div className="fixed top-4 right-4 z-50 flex gap-2 no-print">
                         <button onClick={() => window.print()} className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-bold shadow-lg flex items-center">
-                            <Icon path={icons.print} className="w-5 h-5 mr-2"/> 列印
+                            <Icon path={icons.print} className="w-5 h-5 mr-2"/> 列印 / 存為 PDF
                         </button>
                         <button onClick={onMenu} className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg font-bold shadow-lg">
                             返回
                         </button>
                     </div>
 
-                    {chunks.map((chunk, pageIndex) => (
-                        <div key={pageIndex} className="a4-page mx-auto bg-white mb-8 shadow-lg print:shadow-none print:mb-0 box-border flex flex-col">
-                            {/* Header per page */}
-                            <div className="text-center mb-6 border-b-2 border-black pb-2">
-                                <h1 className="text-3xl font-bold font-serif tracking-widest">成語大師 - 隨堂測驗 (卷{pageIndex + 1})</h1>
-                                <div className="flex justify-between mt-4 text-base font-bold font-serif">
-                                    <span>班級：__________ 姓名：__________ 座號：__________</span>
-                                    <span>得分：__________</span>
+                    <div className="grid grid-cols-2 gap-x-12 gap-y-8">
+                        {items.map((item, idx) => {
+                            let question = "";
+                            // 判斷是否為逗號分隔的句子
+                            if (item.term.includes("，") || item.term.includes(",")) {
+                                const parts = item.term.split(/，|,/);
+                                question = parts[0] + "，__________";
+                            } else {
+                                // 預設 4 字成語：前兩字 + 格子
+                                question = item.term.substring(0, 2) + " □ □";
+                            }
+
+                            return (
+                                <div key={item.id} className="flex items-baseline text-xl break-inside-avoid">
+                                    <span className="font-mono font-bold mr-2 w-8 text-right">{idx + 1}.</span>
+                                    <div className="font-serif tracking-widest">{question}</div>
                                 </div>
-                            </div>
-
-                            {/* Questions Grid */}
-                            <div className="grid grid-cols-2 gap-x-16 gap-y-6 flex-1 content-start">
-                                {chunk.map((item, idx) => {
-                                    const globalIndex = pageIndex * chunkSize + idx + 1;
-                                    let content;
-                                    
-                                    // 判斷題目類型
-                                    if (item.term.includes("，") || item.term.includes(",")) {
-                                        // 句子：顯示逗號前，後接底線
-                                        const parts = item.term.split(/，|,/);
-                                        content = (
-                                            <div className="flex items-end w-full">
-                                                <span className="font-serif text-xl tracking-widest whitespace-nowrap">{parts[0]}，</span>
-                                                <div className="border-b-2 border-black flex-1 min-w-[50px] ml-1"></div>
-                                            </div>
-                                        );
-                                    } else {
-                                        // 成語：顯示前兩字，後接兩個 1cm 方框
-                                        const prefix = item.term.substring(0, 2);
-                                        content = (
-                                            <div className="flex items-center gap-1">
-                                                <span className="font-serif text-xl tracking-[0.5em] mr-2">{prefix}</span>
-                                                <div className="border-2 border-black w-[1cm] h-[1cm]"></div>
-                                                <div className="border-2 border-black w-[1cm] h-[1cm]"></div>
-                                            </div>
-                                        );
-                                    }
-
-                                    return (
-                                        <div key={item.id} className="flex items-center break-inside-avoid">
-                                            <span className="mr-2 w-8 text-right font-mono text-lg font-bold">{globalIndex}.</span>
-                                            {content}
-                                        </div>
-                                    )
-                                })}
-                            </div>
-                            
-                            <div className="mt-auto text-center text-xs text-gray-400 no-print">
-                                * A4 直式排版，每頁 20 題。
-                            </div>
-                        </div>
-                    ))}
+                            );
+                        })}
+                    </div>
+                    
+                    <div className="mt-12 text-center text-xs text-gray-400 no-print">
+                        * 建議使用 A4 直式列印，並取消頁首頁尾以獲得最佳效果。
+                    </div>
                 </div>
             );
         };
@@ -577,7 +645,7 @@
             triggerMusic, connectionStatus, completedDays
         }) => {
             const totalPages = Math.ceil(parsedData["精選成語"].length / ITEMS_PER_PAGE);
-            const progressPercent = totalPages > 0 ? Math.min(100, Math.round((completedDays.length / totalPages) * 100)) : 0;
+            const progressPercent = Math.min(100, Math.round((completedDays.length / totalPages) * 100));
 
             return (
                 <div className="max-w-6xl mx-auto px-4 py-8 animate-fade-in-up mt-16 no-print">
@@ -604,19 +672,19 @@
                                  connectionStatus === 'success' ? '雲端已同步' : '雲端連線失敗'}
                             </div>
                             
-                            {/* 總進度條 */}
+                            {/* Progress Bar */}
                             {isLocked && (
-                                <div className="w-full md:w-64 bg-white p-3 rounded-xl border border-amber-100 shadow-sm">
+                                <div className="w-full md:w-64">
                                     <div className="flex justify-between text-xs font-bold text-amber-800 mb-1">
-                                        <span>修煉總進度</span>
+                                        <span>修煉進度</span>
                                         <span>{progressPercent}% (卷 {completedDays.length}/{totalPages})</span>
                                     </div>
                                     <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden shadow-inner">
                                         <div 
-                                            className="bg-gradient-to-r from-amber-400 to-amber-600 h-3 rounded-full transition-all duration-1000 ease-out flex items-center justify-end" 
+                                            className="bg-amber-500 h-3 rounded-full transition-all duration-1000 ease-out flex items-center justify-end" 
                                             style={{ width: `${progressPercent}%` }}
                                         >
-                                            {progressPercent > 0 && <div className="w-full h-full animate-pulse bg-white/20"></div>}
+                                            {progressPercent > 5 && <div className="w-1.5 h-1.5 bg-white/50 rounded-full mr-1"></div>}
                                         </div>
                                     </div>
                                 </div>
@@ -695,24 +763,24 @@
                             {/* Main Cards */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 {/* 學習模式 */}
-                                <div className="bg-white/90 backdrop-blur rounded-2xl p-6 shadow-md border-2 border-amber-100 hover:border-amber-300 transition-all group relative overflow-hidden cursor-pointer" onClick={() => { onStartLearn('精選成語'); triggerMusic(); }}>
+                                <div className="bg-white/90 backdrop-blur rounded-2xl p-6 shadow-md border-2 border-amber-100 hover:border-amber-300 transition-all group relative overflow-hidden">
                                     <div className="absolute -right-6 -top-6 w-24 h-24 bg-amber-100 rounded-full opacity-50 group-hover:scale-150 transition-transform duration-500"></div>
                                     <h3 className="text-2xl font-black text-amber-900 mb-2 relative z-10">📖 研讀成語</h3>
                                     <p className="text-gray-500 mb-6 relative z-10 h-12">瀏覽所有成語，學習釋義與例句，奠定基礎。</p>
                                     <div className="flex gap-3 relative z-10">
-                                        <button className="flex-1 bg-amber-100 hover:bg-amber-200 text-amber-800 py-3 rounded-xl font-bold transition-colors flex items-center justify-center">
+                                        <button onClick={() => { onStartLearn('精選成語'); triggerMusic(); }} className="flex-1 bg-amber-100 hover:bg-amber-200 text-amber-800 py-3 rounded-xl font-bold transition-colors flex items-center justify-center">
                                             <Icon path={icons.book} className="w-5 h-5 mr-2"/> 開始研讀
                                         </button>
                                     </div>
                                 </div>
 
                                 {/* 測驗模式 */}
-                                <div className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl p-6 shadow-lg text-white hover:shadow-xl transition-all group relative overflow-hidden transform hover:-translate-y-1 cursor-pointer" onClick={() => { onStartQuiz('精選成語'); triggerMusic(); }}>
+                                <div className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl p-6 shadow-lg text-white hover:shadow-xl transition-all group relative overflow-hidden transform hover:-translate-y-1">
                                     <div className="absolute -right-6 -bottom-6 w-32 h-32 bg-white/20 rounded-full opacity-50 group-hover:scale-150 transition-transform duration-500"></div>
                                     <h3 className="text-2xl font-black mb-2 relative z-10">⚔️ 成語挑戰</h3>
                                     <p className="text-amber-100 mb-6 relative z-10 h-12">隨機出題，測試你的成語實力，累積戰功！</p>
                                     <div className="flex gap-3 relative z-10">
-                                        <button className="flex-1 bg-white text-amber-600 hover:bg-amber-50 py-3 rounded-xl font-bold shadow-md transition-colors flex items-center justify-center">
+                                        <button onClick={() => { onStartQuiz('精選成語'); triggerMusic(); }} className="flex-1 bg-white text-amber-600 hover:bg-amber-50 py-3 rounded-xl font-bold shadow-md transition-colors flex items-center justify-center">
                                             <Icon path={icons.play} className="w-5 h-5 mr-2"/> 開始挑戰
                                         </button>
                                     </div>
@@ -799,16 +867,15 @@
                             {mistakes.map(item => { 
                                 const log = mistakeLog.find(m => m.id === item.id); 
                                 return (
-                                    <div key={item.id} className="bg-white rounded-2xl p-6 shadow-sm border-2 border-transparent hover:border-red-200 hover:shadow-md transition-all relative overflow-hidden group flex flex-col">
-                                        <div className="flex justify-between items-start mb-3">
-                                            <h3 className="text-3xl font-black text-gray-800">{item.term}</h3>
-                                            <span className="bg-red-100 text-red-600 text-xs font-bold px-3 py-1 rounded-full border border-red-200 whitespace-nowrap">
-                                                錯誤 {log.count} 次
-                                            </span>
+                                    <div key={item.id} className="bg-white rounded-2xl p-6 shadow-sm border-2 border-transparent hover:border-red-200 hover:shadow-md transition-all relative overflow-hidden group">
+                                        <div className="absolute top-0 right-0 bg-red-100 text-red-600 text-xs font-bold px-3 py-1 rounded-bl-xl border-l border-b border-red-200">
+                                            錯誤 {log.count} 次
                                         </div>
-                                        <p className="text-gray-600 text-sm leading-relaxed mb-4 flex-1">{item.definition}</p>
                                         
-                                        <div className="border-t border-gray-100 pt-3 flex justify-between items-center text-xs text-gray-400 font-mono mt-auto">
+                                        <h3 className="text-3xl font-black text-gray-800 mb-3 mt-2">{item.term}</h3>
+                                        <p className="text-gray-600 text-sm leading-relaxed mb-4 min-h-[3rem]">{item.definition}</p>
+                                        
+                                        <div className="border-t border-gray-100 pt-3 flex justify-between items-center text-xs text-gray-400 font-mono">
                                             <span>#{String(item.id).padStart(3,'0')}</span>
                                             <span>{new Date(log.lastMissed).toLocaleDateString()}</span>
                                         </div>
@@ -821,166 +888,56 @@
             );
         };
 
-        // TableView, LearnView, QuizView, HistoryView Components remain largely the same, included below for completeness
-        
-        const TableView = ({ items, onMenu, favorites, toggleFavorite }) => {
-            const [searchTerm, setSearchTerm] = useState("");
-            const filteredItems = useMemo(() => {
-                if (!searchTerm.trim()) return items;
-                const lowerTerm = searchTerm.toLowerCase();
-                return items.filter(item => String(item.id).includes(lowerTerm) || item.term.includes(lowerTerm) || item.definition.includes(lowerTerm) || item.sentence1.includes(lowerTerm));
-            }, [items, searchTerm]);
-
-            return (
-                <div className="max-w-7xl mx-auto px-4 py-8 animate-fade-in-up mt-12 no-print">
-                    <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-xl overflow-hidden border border-gray-200 flex flex-col h-[85vh]">
-                        <div className="p-6 border-b border-gray-200 bg-gray-50 flex flex-col md:flex-row justify-between items-center gap-4">
-                            <div className="flex items-center gap-4 w-full md:w-auto">
-                                <button onClick={onMenu} className="flex items-center text-gray-600 hover:text-gray-900 font-bold bg-white border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors shadow-sm"><Icon path={icons.left} className="w-5 h-5 mr-2"/> 返回</button>
-                                <h2 className="text-2xl font-black text-gray-800 flex items-center"><Icon path={icons.list} className="w-6 h-6 mr-3 text-purple-600"/> 成語一覽表 <span className="ml-3 text-sm font-normal text-gray-500 bg-gray-200 px-2 py-1 rounded-full">共 {items.length} 則</span></h2>
-                            </div>
-                            <div className="relative w-full md:w-96">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400"><Icon path={icons.search} className="w-5 h-5"/></div>
-                                <input type="text" placeholder="搜尋名稱、編號..." className="pl-10 pr-4 py-3 border-2 border-gray-300 rounded-xl w-full focus:ring-4 focus:ring-purple-100 focus:border-purple-500 outline-none transition-all" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
-                            </div>
-                        </div>
-                        <div className="flex-1 overflow-auto bg-white p-0">
-                            <table className="w-full text-left border-collapse prose-table">
-                                <thead className="bg-purple-50 sticky top-0 z-10 shadow-sm"><tr><th className="p-2 text-center w-12">收藏</th><th className="p-2 text-center w-12">編號</th><th className="p-4 w-48">成語名稱</th><th className="p-4">釋義</th><th className="p-4 w-96">應用範例</th></tr></thead>
-                                <tbody className="divide-y divide-gray-100">{filteredItems.map(item => (<tr key={item.id} className="hover:bg-purple-50/50 transition-colors"><td className="p-2 text-center"><button onClick={() => toggleFavorite(item.id)}><Icon path={icons.heart} className={`w-6 h-6 ${favorites.includes(item.id) ? "text-red-500" : "text-gray-300 hover:text-red-400"}`} fill={favorites.includes(item.id) ? "currentColor" : "none"} /></button></td><td className="p-2 text-center font-mono text-gray-500">{item.id}</td><td className="p-4 font-bold text-gray-900">{item.term}</td><td className="p-4 text-gray-600 text-sm">{item.definition}</td><td className="p-4 text-gray-500 italic text-sm">{item.sentence1}</td></tr>))}</tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            );
-        };
-
-        const LearnView = ({ items, learnPage, setLearnPage, favorites, toggleFavorite, completedDays, onMenu }) => {
-            const totalPages = Math.ceil(items.length / ITEMS_PER_PAGE);
-            const currentItems = items.slice(learnPage * ITEMS_PER_PAGE, (learnPage + 1) * ITEMS_PER_PAGE);
-            const scrollRef = useRef(null);
-            useEffect(() => { if (scrollRef.current) scrollRef.current.scrollTop = 0; window.scrollTo(0, 0); }, [learnPage]);
-
-            return (
-                <div className="max-w-4xl mx-auto px-4 py-6 mt-12 no-print" ref={scrollRef}>
-                    <div className="bg-white/90 backdrop-blur-md p-4 rounded-xl shadow-sm mb-8 flex flex-col md:flex-row justify-between items-center sticky top-16 z-30 border-b-2 border-amber-200">
-                        <div className="flex items-center gap-4 mb-4 md:mb-0 w-full md:w-auto">
-                            <button onClick={onMenu} className="text-gray-500 hover:text-gray-900 flex items-center whitespace-nowrap bg-gray-100 px-3 py-2 rounded-lg font-bold"><Icon path={icons.menu} className="w-5 h-5 mr-2"/> 選單</button>
-                            <h2 className="text-2xl font-black flex items-center whitespace-nowrap text-amber-900">📖 典故卷軸</h2>
-                        </div>
-                        <div className="flex overflow-x-auto max-w-full w-full md:w-auto pb-2 md:pb-0 gap-2 mt-2 md:mt-0 no-scrollbar">
-                            {Array.from({ length: totalPages }).map((_, i) => (<button key={i} onClick={() => setLearnPage(i)} className={`px-4 py-2 rounded-lg text-sm font-bold whitespace-nowrap flex items-center gap-2 transition-all flex-shrink-0 ${learnPage === i ? 'bg-amber-600 text-white shadow-md transform scale-105' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>卷 {i + 1} {completedDays.includes(`精選成語-${i}`) && <span className="bg-green-400 text-white text-[10px] px-1.5 py-0.5 rounded-full">✓</span>}</button>))}
-                        </div>
-                    </div>
-                    <div className="space-y-8">
-                        {currentItems.map((item, idx) => (
-                            <div key={item.id} className="bg-white/95 backdrop-blur-sm rounded-2xl p-6 md:p-8 shadow-sm border border-amber-100 relative group hover:shadow-lg transition-all animate-fade-in-up" style={{animationDelay: `${idx * 0.05}s`}}>
-                                <button onClick={() => toggleFavorite(item.id)} className="absolute top-6 right-6 text-gray-200 hover:text-red-500 z-10 transition-colors"><Icon path={icons.heart} className={`w-8 h-8 drop-shadow-sm ${favorites.includes(item.id) ? "text-red-500" : ""}`} fill={favorites.includes(item.id) ? "currentColor" : "none"} /></button>
-                                <div className="flex flex-col md:flex-row gap-8">
-                                    <div className="flex-1">
-                                        <div className="flex items-baseline gap-3 mb-3 flex-wrap pr-10"><span className="text-amber-300 font-mono text-xl font-black">#{String(item.id).padStart(3,'0')}</span><h3 className="text-3xl font-black text-gray-900 tracking-tight">{item.term}</h3></div>
-                                        <div className="bg-gradient-to-r from-amber-50 to-transparent p-4 rounded-xl text-amber-900 mb-6 text-lg font-medium border-l-8 border-amber-400">{item.definition}</div>
-                                        <div className="text-gray-600 leading-relaxed pl-4 italic border-l-4 border-gray-300 text-lg bg-gray-50 py-2 pr-2 rounded-r-lg"><span className="font-bold not-italic text-gray-400 mr-2 text-sm">應用範例</span>{item.sentence1}</div>
-                                    </div>
-                                    <div className="w-full md:w-96 flex-shrink-0 flex flex-col items-center"><div className="bg-white p-2 border-2 border-gray-100 rounded-2xl w-full shadow-sm"><div className="rounded-xl overflow-hidden bg-gray-200 aspect-[9/16] relative group-img cursor-pointer w-full"><img src={`images/p${String(item.id).padStart(3, '0')}.jpg`} alt={item.scene} loading="lazy" className="w-full h-full object-cover transition-transform duration-700 hover:scale-110" onError={(e) => { e.target.onerror = null; e.target.parentNode.innerHTML = `<div class="w-full h-full flex flex-col items-center justify-center bg-gray-100 text-gray-400 p-4 text-center"><span class="text-sm font-bold text-gray-500">${item.scene}</span></div>`; }} /></div></div></div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                    <div className="h-20"></div>
-                </div>
-            );
-        };
-
-        const QuizView = ({ questions, score, userName, combo, onAnswer, onFinish, onMenu, onViewHistory, favorites, toggleFavorite, totalItems, quizPage, onPageChange, completedDays }) => {
-            const [showResult, setShowResult] = useState(false);
-            const isFinished = questions.length > 0 && questions.every(q => q.userAnswer !== null);
-            const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
-            useEffect(() => { if (isFinished && !showResult) { const timer = setTimeout(() => { onFinish(); setShowResult(true); }, 800); return () => clearTimeout(timer); } }, [isFinished]);
-
-            if (showResult) {
-                 return (
-                    <div className="max-w-2xl mx-auto pt-10 px-4 animate-fade-in-up mt-12 no-print">
-                        <div className="bg-white rounded-3xl shadow-2xl overflow-hidden text-center border-4 border-amber-400">
-                            <div className="bg-amber-500 p-10 text-white relative overflow-hidden"><h2 className="text-4xl font-black mb-2 font-serif relative z-10">戰役結束</h2><p className="opacity-90 font-bold text-lg relative z-10">主公 {userName} 辛苦了</p></div>
-                            <div className="p-10">
-                                <div className="text-8xl font-black text-amber-600 mb-2 font-mono tracking-tighter">{score} <span className="text-3xl text-gray-300 font-bold">/ {questions.length}</span></div>
-                                <div className="flex justify-center gap-4 mb-10"><div className="flex-1 bg-green-50 text-green-700 py-4 rounded-2xl font-black text-xl border-2 border-green-200">大捷 {score}</div><div className="flex-1 bg-red-50 text-red-700 py-4 rounded-2xl font-black text-xl border-2 border-red-200">失利 {questions.length - score}</div></div>
-                                <div className="flex flex-col gap-4"><button onClick={onMenu} className="w-full py-4 bg-gray-100 hover:bg-gray-200 rounded-2xl font-black text-gray-700 text-xl transition-colors">返回大營</button><button onClick={onViewHistory} className="w-full py-4 bg-amber-600 hover:bg-amber-700 rounded-2xl font-black text-white shadow-xl shadow-amber-200 text-xl transition-all transform active:scale-95">查看詳細戰報</button></div>
-                            </div>
-                        </div>
-                    </div>
-                );
-            }
-            return (
-                <div className="max-w-4xl mx-auto pb-20 px-4 mt-12 no-print">
-                    <div className="bg-white/95 backdrop-blur shadow-sm p-4 rounded-b-2xl mb-8 sticky top-16 z-30 border-t-4 border-amber-500 flex flex-col md:flex-row justify-between items-center transition-all">
-                        <div className="flex items-center gap-4 mb-4 md:mb-0 w-full md:w-auto justify-between md:justify-start"><button onClick={onMenu} className="text-gray-500 text-sm flex items-center hover:text-red-600 font-bold bg-gray-100 px-3 py-2 rounded-lg transition-colors"><Icon path={icons.left} className="w-4 h-4 mr-1"/> 撤退</button><div className="font-bold text-xl flex items-center gap-3"><span>{userName}</span><span className="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm font-black border border-amber-200">戰功: {score}</span></div></div>
-                        <div className="flex overflow-x-auto max-w-full w-full md:w-auto pb-1 md:pb-0 gap-2 no-scrollbar">{Array.from({ length: totalPages }).map((_, i) => (<button key={i} onClick={() => onPageChange(i)} className={`px-3 py-1.5 rounded-md text-xs font-bold whitespace-nowrap flex items-center gap-1 transition-all flex-shrink-0 ${quizPage === i ? 'bg-amber-600 text-white shadow-md' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>卷{i + 1}{completedDays.includes(`精選成語-${i}`) && <span className="bg-green-400 text-white text-[10px] w-3 h-3 flex items-center justify-center rounded-full">✓</span>}</button>))}</div>
-                    </div>
-                    <div className="space-y-8">
-                        {questions.map((q, idx) => (
-                            <div key={idx} className={`bg-white/95 backdrop-blur-sm rounded-3xl shadow-sm border-4 overflow-hidden transition-all duration-500 relative ${q.userAnswer === null ? 'border-transparent shadow-md' : (q.isCorrect ? 'border-green-200 bg-green-50/20' : 'border-red-200 bg-red-50/20')}`}>
-                                <button onClick={() => toggleFavorite(q.id)} className="absolute top-5 right-5 z-10 transition-colors p-2 rounded-full bg-white/50 hover:bg-white"><Icon path={icons.heart} className={`w-7 h-7 ${favorites.includes(q.id) ? 'text-red-500' : 'text-gray-300'}`} fill={favorites.includes(q.id) ? "currentColor" : "none"} /></button>
-                                <div className="p-8 border-b border-gray-100"><div className="flex justify-between items-center mb-6"><span className="font-black text-amber-900 tracking-wider text-sm bg-amber-100 px-3 py-1 rounded-full border border-amber-200">問題 {idx + 1}</span>{q.userAnswer !== null && (q.isCorrect ? <span className="text-green-600 font-black flex items-center text-lg animate-pop mr-12"><Icon path={icons.check} className="w-6 h-6 mr-1"/> 正確</span> : <span className="text-red-600 font-black flex items-center text-lg animate-shake mr-12"><Icon path={icons.alert} className="w-6 h-6 mr-1"/> 錯誤</span>)}</div><div className="text-2xl md:text-3xl font-bold text-gray-800 leading-relaxed text-justify">{q.sentence2}</div></div>
-                                <div className="p-6 bg-gray-50/50"><div className="grid grid-cols-1 md:grid-cols-2 gap-4">{q.options.map(opt => { let btnClass = "p-5 rounded-2xl border-2 text-left font-bold text-xl transition-all relative overflow-hidden "; if (q.userAnswer === null) btnClass += "bg-white border-gray-200 hover:border-amber-400 hover:shadow-md cursor-pointer active:scale-[0.98] text-gray-700"; else { if (opt.id === q.id) btnClass += "bg-green-100 border-green-500 text-green-800 ring-2 ring-green-200 shadow-md"; else if (opt.id === q.userAnswer) btnClass += "bg-red-100 border-red-500 text-red-800 opacity-80"; else btnClass += "bg-gray-50 border-gray-200 text-gray-300 opacity-40 grayscale"; } return (<button key={opt.id} onClick={() => onAnswer(idx, opt.id)} disabled={q.userAnswer !== null} className={btnClass}>{opt.term}{q.userAnswer !== null && opt.id === q.id && <div className="absolute right-4 top-1/2 -translate-y-1/2 text-green-600 bg-white rounded-full p-1"><Icon path={icons.check} className="w-5 h-5"/></div>}</button>)})}</div></div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            );
-        };
-
-        const HistoryView = ({ historyLog, setHistoryLog, onMenu }) => {
-            const [selectedLog, setSelectedLog] = useState(null);
-            if (selectedLog) {
-                return (
-                    <div className="w-full max-w-4xl mx-auto bg-white/95 backdrop-blur-md min-h-screen p-6 md:p-8 shadow-2xl animate-fade-in-up mt-12 no-print">
-                        <div className="flex justify-between items-center mb-8 pb-4 border-b border-gray-200 sticky top-16 bg-white z-20 pt-4"><button onClick={() => setSelectedLog(null)} className="flex items-center text-gray-500 hover:text-amber-800 font-bold text-lg px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"><Icon path={icons.left} className="w-6 h-6 mr-1"/> 返回</button><div className="text-right"><h2 className="text-2xl font-black text-gray-800">戰役回放</h2><p className="text-gray-500 text-sm mt-1 font-mono">{selectedLog.date}</p></div></div>
-                        <div className="space-y-6"><div className="flex justify-center mb-8"><div className="text-center"><div className="text-sm text-gray-400 font-bold uppercase mb-1">總得分</div><div className="text-5xl font-black text-amber-600">{selectedLog.score} <span className="text-2xl text-gray-300">/ {selectedLog.total}</span></div></div></div>{selectedLog.details.map((d, i) => (<div key={i} className={`p-6 rounded-2xl border-l-8 shadow-sm ${d.isCorrect ? 'border-green-400 bg-green-50/30' : 'border-red-400 bg-red-50/30'}`}><div className="mb-3 font-bold text-gray-800 text-xl leading-relaxed">{d.sentence}</div><div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-6 bg-white/50 p-3 rounded-lg"><div className="flex items-center"><span className="text-gray-400 text-xs font-bold uppercase mr-2">您的選擇</span><span className={`text-lg font-bold ${d.isCorrect ? "text-green-700" : "text-red-600 line-through decoration-2"}`}>{d.userAnswer}</span></div>{!d.isCorrect && (<div className="flex items-center"><span className="text-gray-400 text-xs font-bold uppercase mr-2">正解</span><span className="text-green-700 text-lg font-black">{d.correctAnswer}</span></div>)}</div></div>))}</div>
-                        <div className="h-20"></div>
-                    </div>
-                )
-            }
-            return (
-                <div className="max-w-4xl mx-auto px-4 py-8 mt-12 no-print">
-                    <div className="flex items-center mb-8"><button onClick={onMenu} className="mr-4 p-3 bg-white rounded-xl shadow border border-gray-200 hover:bg-gray-50"><Icon path={icons.left} className="w-5 h-5"/></button><h2 className="text-3xl font-black text-gray-800 flex items-center gap-3">📜 歷史戰績 <span className="text-sm font-normal text-gray-500 bg-gray-100 px-2 py-1 rounded-full">{historyLog.length} 場</span></h2></div>
-                    {historyLog.length === 0 ? <div className="text-center py-32 text-gray-400 border-2 border-dashed border-gray-200 rounded-3xl bg-white/80 backdrop-blur"><Icon path={icons.history} className="w-16 h-16 mx-auto mb-4 text-gray-300"/><p className="text-xl font-bold">尚無戰役紀錄</p></div> : <div className="bg-white/95 backdrop-blur-md rounded-3xl shadow-lg overflow-hidden border border-gray-200"><table className="w-full text-left border-collapse"><thead className="bg-amber-50 border-b border-amber-100"><tr><th className="p-5 font-black text-amber-900 text-sm uppercase tracking-wider hidden md:table-cell">日期</th><th className="p-5 font-black text-amber-900 text-sm uppercase tracking-wider">主公</th><th className="p-5 font-black text-amber-900 text-sm uppercase tracking-wider">戰功</th><th className="p-5 text-right">操作</th></tr></thead><tbody className="divide-y divide-gray-100">{historyLog.map(log => (<tr key={log.id} className="hover:bg-amber-50/50 transition-colors"><td className="p-5 text-gray-500 text-sm font-mono hidden md:table-cell">{log.date.split(',')[0]}</td><td className="p-5 font-bold text-gray-800">{log.userName}</td><td className="p-5"><span className="font-black px-3 py-1 rounded-lg text-sm bg-gray-100 text-gray-700 border border-gray-200">{log.score} <span className="text-gray-400 font-normal">/ {log.total}</span></span></td><td className="p-5 text-right"><button onClick={() => setSelectedLog(log)} className="text-amber-600 hover:text-white hover:bg-amber-600 px-4 py-2 rounded-lg text-sm font-bold transition-all border border-amber-200 hover:border-amber-600">查看</button></td></tr>))}</tbody></table></div>}
-                    <div className="text-center mt-12 pb-10"><button onClick={() => {if(confirm('確定焚毀所有戰報？此操作無法復原！')) setHistoryLog([])}} className="text-red-400 hover:text-red-600 text-sm flex items-center justify-center mx-auto hover:bg-red-50/80 px-4 py-2 rounded-lg transition-colors"><Icon path={icons.trash} className="w-4 h-4 mr-2"/> 清除所有紀錄</button></div>
-                </div>
-            );
-        };
-
-        // App Component
+        // App Component (Updates)
         const App = () => {
             const parsedData = useMemo(() => ({ "精選成語": IDIOM_DATA }), []);
             const allItems = IDIOM_DATA;
+            // ... (keep existing state declarations)
             const [currentMode, setCurrentMode] = useState('menu'); 
             const [activeCategory, setActiveCategory] = useState(null);
             const [showNameWarning, setShowNameWarning] = useState(false);
+            
             const [userName, setUserName] = useState('');
             const [isLocked, setIsLocked] = useState(false);
+            
+            // Firebase States
             const [connectionStatus, setConnectionStatus] = useState('loading'); 
             const [isFirebaseReady, setIsFirebaseReady] = useState(false);
             const [globalUsers, setGlobalUsers] = useState([]);
+            
+            // User Data States
             const [favorites, setFavorites] = useState([]);
             const [historyLog, setHistoryLog] = useState([]);
             const [mistakeLog, setMistakeLog] = useState([]);
             const [completedDays, setCompletedDays] = useState([]);
+            
             const [savedSession, setSavedSession] = useState(null);
+
             const [learnPage, setLearnPage] = useState(0);
+
             const [quizQuestions, setQuizQuestions] = useState([]);
             const [quizScore, setQuizScore] = useState(0);
             const [combo, setCombo] = useState(0);
             const [quizPage, setQuizPage] = useState(0);
             const [lastUser, setLastUser] = useState(null);
+
             const [bgImage, setBgImage] = useState('');
             const musicPlayerRef = useRef(null);
 
-            const triggerMusic = () => { if(musicPlayerRef.current) musicPlayerRef.current.triggerPlay(); };
+            // ... (keep existing useEffects and handlers: fetchMusic, initAuth, user listener, etc.)
+            
+            const triggerMusic = () => {
+                if(musicPlayerRef.current) {
+                    musicPlayerRef.current.triggerPlay();
+                }
+            };
 
-            useEffect(() => { const randomNum = Math.floor(Math.random() * 5) + 1; setBgImage(`images/san${randomNum}.jpg`); }, []);
+            useEffect(() => {
+                const randomNum = Math.floor(Math.random() * 5) + 1;
+                setBgImage(`images/san${randomNum}.jpg`);
+            }, []);
 
+            // Firebase Logic (Same as before - simplified for brevity in this display, keeping logic intact)
             useEffect(() => {
                 if (!isFirebaseInitialized) { setConnectionStatus('error'); return; }
                 const initAuth = async () => {
@@ -1028,30 +985,87 @@
                 } catch (error) { console.error(`Error updating ${field}:`, error); setConnectionStatus('error'); }
             };
 
-            const handleLogin = async () => { if (userName.trim()) { setIsLocked(true); setShowNameWarning(false); if (isFirebaseReady) { try { const globalDocRef = doc(db, COLLECTION_NAME, DOC_GLOBAL); await updateDoc(globalDocRef, { users: arrayUnion(userName) }); } catch (e) {} } } else { setShowNameWarning(true); } };
+            // ... (Login/Logout/Delete handlers - same as before)
+            const handleLogin = async () => {
+                if (userName.trim()) {
+                    setIsLocked(true); setShowNameWarning(false);
+                    if (isFirebaseReady) {
+                        try { const globalDocRef = doc(db, COLLECTION_NAME, DOC_GLOBAL); await updateDoc(globalDocRef, { users: arrayUnion(userName) }); } catch (e) {}
+                    }
+                } else { setShowNameWarning(true); }
+            };
             const handleQuickLogin = (name) => { setUserName(name); setIsLocked(true); setShowNameWarning(false); };
             const handleLogout = () => { if(confirm('確定要登出嗎？')) { setIsLocked(false); setUserName(''); setFavorites([]); setHistoryLog([]); setMistakeLog([]); setCompletedDays([]); setSavedSession(null); } };
-            const handleDeleteUser = async () => { if (!isFirebaseReady) { alert("請先連線至雲端"); return; } if (confirm('【危險操作】確定要刪除這位使用者的所有資料嗎？')) { if (confirm('再次確認：這將會清除所有學習紀錄、收藏和錯題本，且無法復原！確定要執行嗎？')) { try { const globalDocRef = doc(db, COLLECTION_NAME, DOC_GLOBAL); await updateDoc(globalDocRef, { users: arrayRemove(userName) }); const userDocRef = doc(db, COLLECTION_NAME, userName); await setDoc(userDocRef, { deleted: true }); setFavorites([]); setHistoryLog([]); setMistakeLog([]); setCompletedDays([]); setSavedSession(null); setIsLocked(false); setUserName(''); } catch (e) { alert("刪除失敗"); } } } };
+            const handleDeleteUser = async () => { /* Same as before */ 
+                if (!isFirebaseReady) { alert("請先連線至雲端"); return; }
+                if (confirm('【危險操作】確定要刪除這位使用者的所有資料嗎？')) {
+                    if (confirm('再次確認：這將會清除所有學習紀錄、收藏和錯題本，且無法復原！確定要執行嗎？')) {
+                        try {
+                            const globalDocRef = doc(db, COLLECTION_NAME, DOC_GLOBAL);
+                            await updateDoc(globalDocRef, { users: arrayRemove(userName) });
+                            const userDocRef = doc(db, COLLECTION_NAME, userName);
+                            await setDoc(userDocRef, { deleted: true });
+                            setFavorites([]); setHistoryLog([]); setMistakeLog([]); setCompletedDays([]); setSavedSession(null); setIsLocked(false); setUserName('');
+                        } catch (e) { alert("刪除失敗"); }
+                    }
+                }
+            };
+
             const toggleFavorite = (id) => { const newFavorites = favorites.includes(id) ? favorites.filter(fid => fid !== id) : [...favorites, id]; setFavorites(newFavorites); updateUserData('favorites', newFavorites); };
             const clearHistoryLog = () => { setHistoryLog([]); updateUserData('history', []); };
             const clearMistakeLog = () => { setMistakeLog([]); updateUserData('mistakes', []); };
 
-            const playSoundEffect = (type) => { try { const AudioContext = window.AudioContext || window.webkitAudioContext; if (!AudioContext) return; const ctx = new AudioContext(); const now = ctx.currentTime; if (type === 'correct') { const osc1 = ctx.createOscillator(); const gain1 = ctx.createGain(); osc1.type = 'sine'; osc1.frequency.setValueAtTime(523.25, now); gain1.gain.setValueAtTime(0.1, now); gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.5); osc1.connect(gain1); gain1.connect(ctx.destination); osc1.start(now); osc1.stop(now + 0.5); const osc2 = ctx.createOscillator(); const gain2 = ctx.createGain(); osc2.type = 'sine'; osc2.frequency.setValueAtTime(659.25, now + 0.1); gain2.gain.setValueAtTime(0.1, now + 0.1); gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.6); osc2.connect(gain2); gain2.connect(ctx.destination); osc2.start(now + 0.1); osc2.stop(now + 0.6); } else { const osc = ctx.createOscillator(); const gain = ctx.createGain(); osc.type = 'triangle'; osc.frequency.setValueAtTime(150, now); osc.frequency.exponentialRampToValueAtTime(50, now + 0.3); gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3); osc.connect(gain); gain.connect(ctx.destination); osc.start(now); osc.stop(now + 0.3); } } catch (e) {} };
+            // ... (Audio, Quiz Start, Answer, Finish handlers - same as before)
+            const playSoundEffect = (type) => { /* Same as before */ 
+                 try {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    if (!AudioContext) return;
+                    const ctx = new AudioContext();
+                    const now = ctx.currentTime;
+                    if (type === 'correct') {
+                        const osc1 = ctx.createOscillator(); const gain1 = ctx.createGain();
+                        osc1.type = 'sine'; osc1.frequency.setValueAtTime(523.25, now); gain1.gain.setValueAtTime(0.1, now); gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.5); osc1.connect(gain1); gain1.connect(ctx.destination); osc1.start(now); osc1.stop(now + 0.5);
+                        const osc2 = ctx.createOscillator(); const gain2 = ctx.createGain();
+                        osc2.type = 'sine'; osc2.frequency.setValueAtTime(659.25, now + 0.1); gain2.gain.setValueAtTime(0.1, now + 0.1); gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.6); osc2.connect(gain2); gain2.connect(ctx.destination); osc2.start(now + 0.1); osc2.stop(now + 0.6);
+                    } else {
+                        const osc = ctx.createOscillator(); const gain = ctx.createGain();
+                        osc.type = 'triangle'; osc.frequency.setValueAtTime(150, now); osc.frequency.exponentialRampToValueAtTime(50, now + 0.3); gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3); osc.connect(gain); gain.connect(ctx.destination); osc.start(now); osc.stop(now + 0.3);
+                    }
+                } catch (e) {}
+            };
 
             const handleStartQuiz = (category, pageIdx = 0, isMistakeMode = false) => {
                 if (!isLocked) { setShowNameWarning(true); return; }
-                if (savedSession && savedSession.category === category && savedSession.pageIdx === pageIdx && !isMistakeMode) { if (confirm('發現您有未完成的進度，是否繼續作答？')) { setQuizQuestions(savedSession.questions); setQuizScore(savedSession.score); setCombo(savedSession.combo); setQuizPage(savedSession.pageIdx); setActiveCategory(savedSession.category); setCurrentMode('quiz'); return; } else { updateUserData('currentQuizSession', null); } }
-                let questions = [];
-                if (isMistakeMode) { const mistakeIds = mistakeLog.map(m => m.id); questions = allItems.filter(i => mistakeIds.includes(i.id)); questions.sort(() => Math.random() - 0.5); } 
-                else { 
-                    let sourceItems = category === '收藏夾' ? allItems.filter(i => favorites.includes(i.id)) : parsedData["精選成語"]; 
-                    if (!sourceItems || sourceItems.length === 0) { alert("此分類尚無內容！"); return; } 
-                    const start = pageIdx * ITEMS_PER_PAGE; 
-                    if (start >= sourceItems.length && pageIdx > 0) { handleStartQuiz(category, Math.floor((sourceItems.length - 1) / ITEMS_PER_PAGE), isMistakeMode); return; } 
-                    questions = sourceItems.slice(start, start + ITEMS_PER_PAGE); 
+                if (savedSession && savedSession.category === category && savedSession.pageIdx === pageIdx && !isMistakeMode) {
+                    if (confirm('發現您有未完成的進度，是否繼續作答？')) {
+                        setQuizQuestions(savedSession.questions); setQuizScore(savedSession.score); setCombo(savedSession.combo); setQuizPage(savedSession.pageIdx); setActiveCategory(savedSession.category); setCurrentMode('quiz'); return;
+                    } else { updateUserData('currentQuizSession', null); }
                 }
+                
+                let questions = [];
+                if (isMistakeMode) {
+                    const mistakeIds = mistakeLog.map(m => m.id);
+                    questions = allItems.filter(i => mistakeIds.includes(i.id));
+                    questions.sort(() => Math.random() - 0.5);
+                } else {
+                    let sourceItems = category === '收藏夾' ? allItems.filter(i => favorites.includes(i.id)) : parsedData["精選成語"];
+                    if (!sourceItems || sourceItems.length === 0) { alert("此分類尚無內容！"); return; }
+                    const start = pageIdx * ITEMS_PER_PAGE;
+                    if (start >= sourceItems.length && pageIdx > 0) {
+                         handleStartQuiz(category, Math.floor((sourceItems.length - 1) / ITEMS_PER_PAGE), isMistakeMode); return;
+                    }
+                    questions = sourceItems.slice(start, start + ITEMS_PER_PAGE);
+                }
+
                 if (questions.length === 0) { alert(isMistakeMode ? "目前沒有錯題！" : "此頁面無題目"); return; }
-                const quizSet = questions.map(item => { let pool = allItems.filter(i => i.id !== item.id); const distractors = pool.sort(() => Math.random() - 0.5).slice(0, 3); const options = [...distractors, item].sort(() => Math.random() - 0.5); return { ...item, options, userAnswer: null, isCorrect: null }; });
+
+                const quizSet = questions.map(item => {
+                    let pool = allItems.filter(i => i.id !== item.id);
+                    const distractors = pool.sort(() => Math.random() - 0.5).slice(0, 3);
+                    const options = [...distractors, item].sort(() => Math.random() - 0.5);
+                    return { ...item, options, userAnswer: null, isCorrect: null };
+                });
+
                 setQuizQuestions(quizSet); setQuizScore(0); setCombo(0); setQuizPage(pageIdx); setActiveCategory(isMistakeMode ? '錯題本' : category); setCurrentMode('quiz'); window.scrollTo(0,0);
             };
 
@@ -1059,33 +1073,117 @@
                 const newQuestions = [...quizQuestions]; const q = newQuestions[qIndex];
                 if (q.userAnswer !== null) return; 
                 const isCorrect = selectedOptionId === q.id; q.userAnswer = selectedOptionId; q.isCorrect = isCorrect;
+                
                 let newScore = quizScore; let newCombo = combo;
-                if (isCorrect) { newScore++; newCombo++; setQuizScore(newScore); setCombo(newCombo); playSoundEffect('correct'); if (newCombo > 0 && (newCombo + 1) % 5 === 0) confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } }); } 
-                else { newCombo = 0; setCombo(0); playSoundEffect('wrong'); const newMistakeLog = [...mistakeLog]; const existingIndex = newMistakeLog.findIndex(m => m.id === q.id); if (existingIndex > -1) { newMistakeLog[existingIndex] = { ...newMistakeLog[existingIndex], count: newMistakeLog[existingIndex].count + 1, lastMissed: new Date().toISOString() }; } else { newMistakeLog.push({ id: q.id, count: 1, lastMissed: new Date().toISOString() }); } setMistakeLog(newMistakeLog); updateUserData('mistakes', newMistakeLog); }
+                if (isCorrect) {
+                    newScore++; newCombo++; setQuizScore(newScore); setCombo(newCombo); playSoundEffect('correct');
+                    if (newCombo > 0 && (newCombo + 1) % 5 === 0) confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+                } else {
+                    newCombo = 0; setCombo(0); playSoundEffect('wrong');
+                    const newMistakeLog = [...mistakeLog];
+                    const existingIndex = newMistakeLog.findIndex(m => m.id === q.id);
+                    if (existingIndex > -1) { newMistakeLog[existingIndex] = { ...newMistakeLog[existingIndex], count: newMistakeLog[existingIndex].count + 1, lastMissed: new Date().toISOString() }; } 
+                    else { newMistakeLog.push({ id: q.id, count: 1, lastMissed: new Date().toISOString() }); }
+                    setMistakeLog(newMistakeLog); updateUserData('mistakes', newMistakeLog);
+                }
                 setQuizQuestions(newQuestions);
-                if (activeCategory !== '錯題本') { updateUserData('currentQuizSession', { questions: newQuestions, score: newScore, combo: newCombo, category: activeCategory, pageIdx: quizPage, timestamp: new Date().toISOString() }); }
+                if (activeCategory !== '錯題本') {
+                    updateUserData('currentQuizSession', { questions: newQuestions, score: newScore, combo: newCombo, category: activeCategory, pageIdx: quizPage, timestamp: new Date().toISOString() });
+                }
             };
 
             const finishQuiz = () => {
                 const record = { id: Date.now(), date: new Date().toLocaleString(), userName, score: quizScore, total: quizQuestions.length, category: activeCategory, details: quizQuestions.map(q => ({ term: q.term, definition: q.definition, sentence: q.sentence2, isCorrect: q.isCorrect, userAnswer: q.options.find(o => o.id === q.userAnswer)?.term || "未作答", correctAnswer: q.term })) };
                 const newHistory = [record, ...historyLog]; setHistoryLog(newHistory); updateUserData('history', newHistory);
-                if (activeCategory !== '收藏夾' && activeCategory !== '錯題本') { const key = `${activeCategory}-${quizPage}`; if (!completedDays.includes(key) && quizScore > 0) { const newCompleted = [...completedDays, key]; setCompletedDays(newCompleted); updateUserData('progress', newCompleted); } }
+                if (activeCategory !== '收藏夾' && activeCategory !== '錯題本') { 
+                    const key = `${activeCategory}-${quizPage}`; 
+                    if (!completedDays.includes(key) && quizScore > 0) { const newCompleted = [...completedDays, key]; setCompletedDays(newCompleted); updateUserData('progress', newCompleted); } 
+                }
                 updateUserData('currentQuizSession', null);
             };
 
             return (
                 <div className="min-h-screen font-sans selection:bg-amber-200 selection:text-amber-900 relative">
+                    {/* Background Layer */}
                     <div className="fixed inset-0 z-0 bg-cover bg-center transition-all duration-1000 no-print" style={{ backgroundImage: `url('${bgImage}')`, backgroundColor: '#fcf9f2' }}></div>
                     <div className="fixed inset-0 z-0 bg-white/70 backdrop-blur-[2px] no-print"></div>
+
+                    {/* Main Content Area */}
                     <div className="relative z-10">
+                        {/* Music Player (No Print) */}
                         <MusicPlayer ref={musicPlayerRef} />
-                        {currentMode === 'menu' && <MenuView userName={userName} setUserName={setUserName} showNameWarning={showNameWarning} mistakeLog={mistakeLog} favorites={favorites} parsedData={parsedData} onStartLearn={(cat) => { setActiveCategory(cat); setLearnPage(0); setCurrentMode('learn'); }} onStartQuiz={(cat) => handleStartQuiz(cat, 0)} onViewHistory={() => setCurrentMode('history')} onViewMistakes={() => setCurrentMode('mistakes')} onViewTable={() => setCurrentMode('table')} onPrint={() => setCurrentMode('print')} onLogin={handleLogin} isLocked={isLocked} onQuickLogin={handleQuickLogin} lastUser={lastUser} onLogout={handleLogout} onDeleteUser={handleDeleteUser} globalUsers={globalUsers} triggerMusic={triggerMusic} connectionStatus={connectionStatus} completedDays={completedDays} />}
-                        {currentMode === 'learn' && <LearnView items={activeCategory === '收藏夾' ? allItems.filter(i => favorites.includes(i.id)) : parsedData["精選成語"]} learnPage={learnPage} setLearnPage={setLearnPage} favorites={favorites} toggleFavorite={toggleFavorite} completedDays={completedDays} onMenu={() => setCurrentMode('menu')} />}
-                        {currentMode === 'quiz' && <QuizView questions={quizQuestions} score={quizScore} userName={userName} combo={combo} onAnswer={handleAnswer} onFinish={finishQuiz} onMenu={() => setCurrentMode('menu')} onViewHistory={() => setCurrentMode('history')} favorites={favorites} toggleFavorite={toggleFavorite} activeCategory={activeCategory} totalItems={activeCategory === '收藏夾' ? favorites.length : parsedData["精選成語"].length} quizPage={quizPage} onPageChange={(page) => handleStartQuiz(activeCategory, page)} completedDays={completedDays} />}
-                        {currentMode === 'history' && <HistoryView historyLog={historyLog} setHistoryLog={clearHistoryLog} onMenu={() => setCurrentMode('menu')} />}
-                        {currentMode === 'mistakes' && <MistakeView mistakes={allItems.filter(i => mistakeLog.some(m => m.id === i.id))} mistakeLog={mistakeLog} setMistakeLog={clearMistakeLog} onMenu={() => setCurrentMode('menu')} onReviewAll={() => handleStartQuiz(null, 0, true)} />}
-                        {currentMode === 'table' && <TableView items={allItems} onMenu={() => setCurrentMode('menu')} favorites={favorites} toggleFavorite={toggleFavorite} />}
-                        {currentMode === 'print' && <PrintView items={allItems} onMenu={() => setCurrentMode('menu')} />}
+
+                        {currentMode === 'menu' && (
+                            <MenuView 
+                                userName={userName} setUserName={setUserName} showNameWarning={showNameWarning}
+                                mistakeLog={mistakeLog} favorites={favorites} parsedData={parsedData}
+                                onStartLearn={(cat) => { setActiveCategory(cat); setLearnPage(0); setCurrentMode('learn'); }}
+                                onStartQuiz={(cat) => handleStartQuiz(cat, 0)}
+                                onViewHistory={() => setCurrentMode('history')}
+                                onViewMistakes={() => setCurrentMode('mistakes')}
+                                onViewTable={() => setCurrentMode('table')}
+                                onPrint={() => setCurrentMode('print')}
+                                onLogin={handleLogin} isLocked={isLocked} onQuickLogin={handleQuickLogin} lastUser={lastUser}
+                                onLogout={handleLogout} onDeleteUser={handleDeleteUser}
+                                globalUsers={globalUsers}
+                                triggerMusic={triggerMusic}
+                                connectionStatus={connectionStatus}
+                                completedDays={completedDays}
+                            />
+                        )}
+                        {currentMode === 'learn' && (
+                            <LearnView 
+                                items={activeCategory === '收藏夾' ? allItems.filter(i => favorites.includes(i.id)) : parsedData["精選成語"]}
+                                learnPage={learnPage} setLearnPage={setLearnPage}
+                                favorites={favorites} toggleFavorite={toggleFavorite}
+                                completedDays={completedDays}
+                                onMenu={() => setCurrentMode('menu')}
+                            />
+                        )}
+                        {currentMode === 'quiz' && (
+                            <QuizView 
+                                questions={quizQuestions} score={quizScore} userName={userName} combo={combo}
+                                onAnswer={handleAnswer} onFinish={finishQuiz}
+                                onMenu={() => setCurrentMode('menu')}
+                                onViewHistory={() => setCurrentMode('history')}
+                                favorites={favorites} toggleFavorite={toggleFavorite}
+                                activeCategory={activeCategory}
+                                totalItems={activeCategory === '收藏夾' ? favorites.length : parsedData["精選成語"].length}
+                                quizPage={quizPage}
+                                onPageChange={(page) => handleStartQuiz(activeCategory, page)}
+                                completedDays={completedDays}
+                            />
+                        )}
+                        {currentMode === 'history' && (
+                            <HistoryView 
+                                historyLog={historyLog} 
+                                setHistoryLog={clearHistoryLog} 
+                                onMenu={() => setCurrentMode('menu')} 
+                            />
+                        )}
+                        {currentMode === 'mistakes' && (
+                            <MistakeView 
+                                mistakes={allItems.filter(i => mistakeLog.some(m => m.id === i.id))}
+                                mistakeLog={mistakeLog} 
+                                setMistakeLog={clearMistakeLog} 
+                                onMenu={() => setCurrentMode('menu')} 
+                                onReviewAll={() => handleStartQuiz(null, 0, true)}
+                            />
+                        )}
+                        {currentMode === 'table' && (
+                            <TableView 
+                                items={allItems}
+                                onMenu={() => setCurrentMode('menu')} 
+                                favorites={favorites}
+                                toggleFavorite={toggleFavorite}
+                            />
+                        )}
+                        {currentMode === 'print' && (
+                            <PrintView 
+                                items={allItems}
+                                onMenu={() => setCurrentMode('menu')}
+                            />
+                        )}
                     </div>
                 </div>
             );
