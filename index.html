@@ -51,15 +51,21 @@
         }
         .animate-shake { animation: shake 0.4s ease-in-out; }
         
-        /* 跑馬燈動畫 */
+       /* 跑馬燈動畫 (優化版) */
         @keyframes marquee {
-            0% { transform: translateX(100%); }
-            100% { transform: translateX(-100%); }
+            0% { left: 100%; transform: translateX(0); }
+            100% { left: 0; transform: translateX(-100%); }
         }
         .animate-marquee {
-            animation: marquee 25s linear infinite;
+            /* 調整秒數：數字越大越慢，建議 40s 或 60s */
+            animation: marquee 30s linear infinite; 
             white-space: nowrap;
             display: inline-block;
+            /* 確保與 JS 中的 absolute 定位配合 */
+            position: absolute; 
+            top: 50%;
+            /* 修正垂直置中，因為我們改變了 transform 的行為 */
+            margin-top: -0.6em; 
         }
 
         /* 圖片容器互動 */
