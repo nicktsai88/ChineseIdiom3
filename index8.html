@@ -66,11 +66,14 @@
             100% { left: 0; transform: translateX(-100%); }
         }
         .animate-marquee {
+            /* 調整秒數：數字越大越慢，建議 40s 或 60s */
             animation: marquee 30s linear infinite; 
             white-space: nowrap;
             display: inline-block;
+            /* 確保與 JS 中的 absolute 定位配合 */
             position: absolute; 
             top: 50%;
+            /* 修正垂直置中，因為我們改變了 transform 的行為 */
             margin-top: -0.6em; 
         }
 
@@ -135,32 +138,6 @@
             -ms-overflow-style: none;
             scrollbar-width: none;
         }
-
-        /* 列印專用樣式 */
-        @media print {
-            @page {
-                size: A4 portrait;
-                margin: 1.5cm;
-            }
-            body * {
-                visibility: hidden;
-            }
-            #print-area, #print-area * {
-                visibility: visible;
-            }
-            #print-area {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 100%;
-                background: white;
-                color: black;
-                font-family: "標楷體", "DFKai-SB", serif; /* 考卷常用字體 */
-            }
-            .no-print {
-                display: none !important;
-            }
-        }
     </style>
 </head>
 <body>
@@ -204,18 +181,18 @@
         // ==========================================
         //  常數設定
         // ==========================================
-        const COLLECTION_NAME = 'ChineseIdiom3_Data'; 
+        const COLLECTION_NAME = 'ChineseIdiom3_Data'; // 提取自原本的 ChineseIdiom3 前綴
         const DOC_GLOBAL = 'global_users';
         
         const MUSIC_CONFIG = {
-            username: 'nicktsai88',  
-            repo: 'Music',         
-            folder: ''              
+            username: 'nicktsai88',  // 您的 GitHub 帳號
+            repo: 'Music',         // 您的儲存庫名稱
+            folder: ''              // 若在根目錄請留空，例如 'music'
         };
 
-        const ITEMS_PER_PAGE = 15;
+        const ITEMS_PER_PAGE = 20;
 
-        // --- 完整成語資料庫 ---
+        // --- 完整成語資料庫 (保持不變) ---
         const IDIOM_DATA = [
             { id: 1, term: "飲水思源", definition: "喝水時想到水的來源。比喻不忘本，感激別人的恩德。", sentence1: "做人要飲水思源，對於曾經幫助過我們的人，絕對不能忘恩負義。", sentence2: "校慶時，傑出校友們紛紛回校捐款，展現了飲水思源的精神。", scene: "喝水時想到水源，比喻不忘本。" },
             { id: 2, term: "杯水車薪", definition: "用一杯水去救一車著了火的柴草。比喻力量太小，無濟於事。", sentence1: "對於這龐大的債務來說，這點錢不過是杯水車薪，解決不了問題。", sentence2: "乾旱如此嚴重，這場小雨簡直是杯水車薪，無法解除缺水危機。", scene: "一杯水救一車火，力量太小。" },
@@ -393,7 +370,7 @@
             { id: 174, term: "一帆風順", definition: "船掛滿帆，順風行駛。比喻事情非常順利，沒有阻礙。", sentence1: "祝你未來的事業一帆風順，鵬程萬里。", sentence2: "人生不可能永遠一帆風順，總會遇到一些挫折。", scene: "旅程或事情非常順利。" }
         ];
 
-        // --- Icons (Fixed syntax error in print icon) ---
+        // --- Icons (新增 Music 相關 Icon) ---
         const icons = {
             check: <polyline points="20 6 9 17 4 12" />,
             play: <polygon points="5 3 19 12 5 21 5 3" />,
@@ -415,8 +392,7 @@
             volumeX: <><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></>,
             music: <path d="M9 18V5l12-2v13"></path>,
             skipBack: <><polygon points="19 20 9 12 19 4 19 20"></polygon><line x1="5" y1="19" x2="5" y2="5"></line></>,
-            skipForward: <><polygon points="5 4 15 12 5 20 5 4"></polygon><line x1="19" y1="5" x2="19" y2="19"></line></>,
-            print: <><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></>
+            skipForward: <><polygon points="5 4 15 12 5 20 5 4"></polygon><line x1="19" y1="5" x2="19" y2="19"></line></>
         };
 
         const Icon = ({ path, className, fill = "none" }) => (
@@ -430,12 +406,13 @@
             const [isPlaying, setIsPlaying] = useState(false);
             const [volume, setVolume] = useState(0.5);
             const [hasInteracted, setHasInteracted] = useState(false);
-            const [status, setStatus] = useState('loading'); 
+            const [status, setStatus] = useState('loading'); // loading, ready, empty, error
             const audioRef = useRef(null);
 
             useImperativeHandle(ref, () => ({
                 triggerPlay: () => {
                     if (playlist.length === 0) return;
+                    
                     if (!hasInteracted) {
                         setHasInteracted(true);
                         if (audioRef.current) {
@@ -531,7 +508,7 @@
             const themeColor = '#FF8800';
 
             return (
-                <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-white/95 backdrop-blur-md px-5 py-2.5 rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-gray-100 flex items-center gap-4 transition-all duration-300 hover:shadow-[0_12px_40px_rgb(0,0,0,0.15)] no-print">
+                <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-white/95 backdrop-blur-md px-5 py-2.5 rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-gray-100 flex items-center gap-4 transition-all duration-300 hover:shadow-[0_12px_40px_rgb(0,0,0,0.15)]">
                     {isReady && (
                         <audio 
                             ref={audioRef} 
@@ -582,254 +559,574 @@
 
         // -- Components --
 
-        const PrintView = ({ items, onMenu }) => {
-            useEffect(() => {
-                // 自動觸發列印，使用者可取消
-                // window.print();
-            }, []);
+        const MenuView = ({ 
+            userName, setUserName, showNameWarning, mistakeLog, favorites, parsedData, 
+            onStartLearn, onStartQuiz, onViewHistory, onViewMistakes, onViewTable,
+            onLogin, isLocked, onQuickLogin, globalUsers, onLogout, onDeleteUser,
+            triggerMusic, connectionStatus
+        }) => (
+            <div className="max-w-5xl mx-auto px-4 py-8 animate-fade-in-up mt-16">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 gap-6">
+                    <div>
+                        <h1 className="text-4xl md:text-5xl font-extrabold text-amber-900 tracking-tight flex items-center gap-3 font-serif drop-shadow-sm">
+                            <span className="text-5xl md:text-6xl filter drop-shadow-md">📜</span> 
+                            <div>
+                                成語大師 <span className="text-lg md:text-xl block md:inline text-amber-700 font-normal">精選成語版</span>
+                            </div>
+                        </h1>
+                        <div className="mt-6 flex flex-wrap items-center gap-3 p-4 bg-amber-100/80 backdrop-blur-sm rounded-xl border border-amber-200 shadow-sm">
+                            <span className="text-amber-900 font-bold text-lg">主公姓名：</span>
+                            <div className="relative flex flex-wrap items-center gap-2">
+                                <input 
+                                    type="text" 
+                                    value={userName}
+                                    onChange={(e) => !isLocked && setUserName(e.target.value)}
+                                    placeholder="請輸入姓名"
+                                    disabled={isLocked}
+                                    className={`border-2 rounded-lg px-4 py-2 outline-none transition-all text-lg w-48 ${isLocked ? 'bg-amber-50 text-gray-500 border-amber-200 cursor-not-allowed font-bold' : (showNameWarning ? 'border-red-500 bg-red-50 ring-2 ring-red-200 animate-shake' : 'border-amber-300 focus:ring-4 focus:ring-amber-200 focus:border-amber-500 bg-white')}`}
+                                />
+                                {!isLocked ? (
+                                    <button onClick={() => { onLogin(); triggerMusic(); }} className="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg text-base font-bold flex items-center transition-colors shadow-sm transform active:scale-95">
+                                        <Icon path={icons.login} className="w-5 h-5 mr-2" fill="currentColor"/> 登入
+                                    </button>
+                                ) : (
+                                    <div className="flex flex-wrap gap-2">
+                                        <span className="bg-green-100 text-green-800 px-3 py-2 rounded-lg text-sm font-bold flex items-center border border-green-200">
+                                            <Icon path={icons.check} className="w-5 h-5 mr-1.5"/> 已登入
+                                        </span>
+                                        <button onClick={onLogout} className="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center transition-colors shadow-sm">
+                                            <Icon path={icons.logout} className="w-4 h-4 mr-1.5" fill="currentColor"/> 登出
+                                        </button>
+                                        <button onClick={onDeleteUser} className="bg-gray-400 hover:bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center transition-colors shadow-sm group" title="刪除使用者">
+                                            <Icon path={icons.userX} className="w-4 h-4 mr-1.5 group-hover:scale-110 transition-transform" fill="currentColor"/> 刪除
+                                        </button>
+                                    </div>
+                                )}
+                                
+                                {/* 快速登入列表 */}
+                                {!isLocked && (
+                                    <div className="w-full mt-2">
+                                        <div className="text-xs text-amber-800 font-bold mb-1 ml-1 flex items-center">
+                                            <Icon path={icons.lightning} className="w-3 h-3 mr-1"/> 快速登入 (點擊姓名)
+                                        </div>
+                                        <div className="max-h-32 overflow-y-auto bg-white/50 border border-amber-200 rounded-lg p-2 flex flex-wrap gap-2 shadow-inner">
+                                            {globalUsers.length > 0 ? (
+                                                globalUsers.map((u, idx) => (
+                                                    <button 
+                                                        key={idx}
+                                                        onClick={() => { onQuickLogin(u); triggerMusic(); }}
+                                                        className="bg-blue-50 hover:bg-blue-100 text-blue-800 px-3 py-1.5 rounded-md text-sm font-bold border border-blue-100 transition-colors"
+                                                    >
+                                                        {u}
+                                                    </button>
+                                                ))
+                                            ) : (
+                                                <div className="w-full text-center text-gray-500 text-sm py-2 italic">
+                                                    尚無挑戰者紀錄，歡迎加入！
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                                {showNameWarning && <div className="absolute left-0 -bottom-8 text-sm text-red-600 font-bold bg-red-100 px-2 py-1 rounded">* 請先輸入姓名並登入</div>}
+                            </div>
+                        </div>
+                    </div>
+                    <div className="flex flex-col items-end gap-3 w-full md:w-auto">
+                        {/* 狀態指示燈 */}
+                        <div className="flex items-center bg-white/80 backdrop-blur px-3 py-1.5 rounded-full border border-gray-200 shadow-sm text-sm font-bold text-gray-700 mb-2">
+                            <span className={`status-dot ${
+                                connectionStatus === 'loading' ? 'status-loading' : 
+                                connectionStatus === 'success' ? 'status-success' : 'status-error'
+                            }`}></span>
+                            {connectionStatus === 'loading' ? '讀取資料中...' : 
+                             connectionStatus === 'success' ? '已同步' : '雲端同步失敗'}
+                        </div>
 
-            return (
-                <div id="print-area" className="w-full bg-white p-8">
-                    <div className="text-center mb-8 border-b-2 border-black pb-4 no-print-border">
-                        <h1 className="text-3xl font-black font-serif tracking-widest mb-2">成語大師 - 隨堂測驗</h1>
-                        <div className="flex justify-between items-end mt-4 text-sm font-bold">
-                            <span>班級：__________</span>
-                            <span>姓名：__________</span>
-                            <span>座號：__________</span>
-                            <span>得分：__________</span>
+                        <div className="flex gap-3 w-full">
+                            <button onClick={onViewHistory} className="flex-1 md:flex-none justify-center flex items-center px-5 py-3 bg-white/90 backdrop-blur text-gray-700 rounded-xl shadow-sm hover:shadow-md hover:bg-white border-2 border-gray-200 font-bold text-lg transition-all"><Icon path={icons.history} className="w-5 h-5 mr-2"/> 戰績</button>
+                            <button onClick={onViewMistakes} className="flex-1 md:flex-none justify-center flex items-center px-5 py-3 bg-red-50/90 backdrop-blur text-red-700 rounded-xl shadow-sm hover:shadow-md hover:bg-red-100 border-2 border-red-200 font-bold text-lg transition-all"><Icon path={icons.alert} className="w-5 h-5 mr-2"/> 錯題 ({mistakeLog.length})</button>
+                        </div>
+                    </div>
+                </div>
+
+                {/* 成語一覽表按鈕 */}
+                <div className="mb-8">
+                    <button onClick={onViewTable} className="w-full py-4 bg-purple-600/90 backdrop-blur hover:bg-purple-700 text-white rounded-2xl shadow-lg hover:shadow-xl font-bold text-xl flex items-center justify-center transition-all transform active:scale-[0.99] border-2 border-purple-400 group">
+                        <Icon path={icons.list} className="w-6 h-6 mr-3 group-hover:scale-110 transition-transform"/> 成語一覽表 (快速查詢)
+                    </button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {/* 錦囊收藏卡片 */}
+                    <div className="bg-gradient-to-br from-red-50/90 to-orange-50/90 backdrop-blur p-8 rounded-2xl shadow-sm border-2 border-red-100 flex flex-col justify-between hover:border-red-200 transition-colors">
+                        <div className="flex items-start mb-6">
+                            <div className="bg-white p-4 rounded-2xl shadow-sm text-red-500 mr-5 border border-red-100">
+                                <Icon path={icons.heart} className="w-10 h-10" fill="currentColor"/>
+                            </div>
+                            <div>
+                                <h3 className="text-2xl font-black text-gray-800 mb-1">錦囊收藏</h3>
+                                <p className="text-gray-600 font-medium">目前收藏了 <span className="text-red-600 font-bold text-xl">{favorites.length}</span> 則成語</p>
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4 mt-auto">
+                            <button onClick={() => { onStartLearn('收藏夾'); triggerMusic(); }} disabled={favorites.length===0} className="py-3 bg-white text-red-700 rounded-xl shadow-sm hover:bg-red-50 font-bold text-lg border-2 border-red-100 disabled:opacity-50 disabled:cursor-not-allowed">溫故</button>
+                            <button onClick={() => { onStartQuiz('收藏夾'); triggerMusic(); }} disabled={favorites.length===0} className="py-3 bg-red-600 text-white rounded-xl shadow-lg hover:bg-red-700 font-bold text-lg transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">知新挑戰</button>
                         </div>
                     </div>
                     
-                    {/* 控制列 (不列印) */}
-                    <div className="fixed top-4 right-4 z-50 flex gap-2 no-print">
-                        <button onClick={() => window.print()} className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-bold shadow-lg flex items-center">
-                            <Icon path={icons.print} className="w-5 h-5 mr-2"/> 列印 / 存為 PDF
-                        </button>
-                        <button onClick={onMenu} className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg font-bold shadow-lg">
-                            返回
-                        </button>
+                    {/* 精選成語卡片 */}
+                    <div className="bg-white/90 backdrop-blur p-8 rounded-2xl shadow-sm hover:shadow-xl transition-all border-2 border-amber-200 flex flex-col relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-amber-100 rounded-bl-full -mr-12 -mt-12 opacity-50 group-hover:scale-110 transition-transform duration-500"></div>
+                        <div className="flex justify-between items-start mb-3 relative z-10">
+                            <h3 className="text-3xl font-black text-amber-900">精選成語</h3>
+                            <span className="text-sm font-bold text-amber-700 bg-amber-100 px-3 py-1 rounded-full border border-amber-200">全 174 則</span>
+                        </div>
+                        <div className="text-gray-500 mb-8 font-medium text-lg relative z-10">
+                            包含飲水思源、杯水車薪、未雨綢繆...等常用成語，增進語文能力。
+                        </div>
+                        <div className="grid grid-cols-2 gap-4 mt-auto relative z-10">
+                            <button onClick={() => { onStartLearn('精選成語'); triggerMusic(); }} className="flex items-center justify-center py-3 bg-amber-50 text-amber-900 rounded-xl hover:bg-amber-100 font-bold text-lg border-2 border-amber-200 transition-colors"><Icon path={icons.book} className="w-5 h-5 mr-2"/> 研讀</button>
+                            <button onClick={() => { onStartQuiz('精選成語'); triggerMusic(); }} className="flex items-center justify-center py-3 bg-amber-600 text-white rounded-xl shadow-lg hover:bg-amber-700 font-bold text-lg transform active:scale-95 transition-all"><Icon path={icons.play} className="w-5 h-5 mr-2"/> 開始挑戰</button>
+                        </div>
                     </div>
+                </div>
+                
+                <div className="mt-12 text-center text-gray-500 text-sm font-medium bg-white/50 backdrop-blur rounded-full py-2 inline-block px-6 mx-auto w-full md:w-auto">
+                    &copy; 2025 成語大師 • 互動式學習系統
+                </div>
+            </div>
+        );
 
-                    <div className="grid grid-cols-2 gap-x-12 gap-y-8">
-                        {items.map((item, idx) => {
-                            let question = "";
-                            // 判斷是否為逗號分隔的句子
-                            if (item.term.includes("，") || item.term.includes(",")) {
-                                const parts = item.term.split(/，|,/);
-                                question = parts[0] + "，__________";
-                            } else {
-                                // 預設 4 字成語：前兩字 + 格子
-                                question = item.term.substring(0, 2) + " □ □";
-                            }
+        // TableView 組件 (保持不變)
+        const TableView = ({ items, onMenu, favorites, toggleFavorite }) => {
+            const [searchTerm, setSearchTerm] = useState("");
+            
+            const filteredItems = useMemo(() => {
+                if (!searchTerm.trim()) return items;
+                const lowerTerm = searchTerm.toLowerCase();
+                return items.filter(item => 
+                    String(item.id).includes(lowerTerm) ||
+                    item.term.includes(lowerTerm) ||
+                    item.definition.includes(lowerTerm) ||
+                    item.sentence1.includes(lowerTerm)
+                );
+            }, [items, searchTerm]);
 
-                            return (
-                                <div key={item.id} className="flex items-baseline text-xl break-inside-avoid">
-                                    <span className="font-mono font-bold mr-2 w-8 text-right">{idx + 1}.</span>
-                                    <div className="font-serif tracking-widest">{question}</div>
+            return (
+                <div className="max-w-7xl mx-auto px-4 py-8 animate-fade-in-up mt-12">
+                    <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-xl overflow-hidden border border-gray-200 flex flex-col h-[85vh]">
+                        {/* Header & Search */}
+                        <div className="p-6 border-b border-gray-200 bg-gray-50 flex flex-col md:flex-row justify-between items-center gap-4">
+                            <div className="flex items-center gap-4 w-full md:w-auto">
+                                <button onClick={onMenu} className="flex items-center text-gray-600 hover:text-gray-900 font-bold bg-white border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors shadow-sm">
+                                    <Icon path={icons.left} className="w-5 h-5 mr-2"/> 返回
+                                </button>
+                                <h2 className="text-2xl font-black text-gray-800 flex items-center">
+                                    <Icon path={icons.list} className="w-6 h-6 mr-3 text-purple-600"/>
+                                    成語一覽表
+                                    <span className="ml-3 text-sm font-normal text-gray-500 bg-gray-200 px-2 py-1 rounded-full">共 {items.length} 則</span>
+                                </h2>
+                            </div>
+                            <div className="relative w-full md:w-96">
+                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                                    <Icon path={icons.search} className="w-5 h-5"/>
                                 </div>
-                            );
-                        })}
-                    </div>
-                    
-                    <div className="mt-12 text-center text-xs text-gray-400 no-print">
-                        * 建議使用 A4 直式列印，並取消頁首頁尾以獲得最佳效果。
+                                <input
+                                    type="text"
+                                    placeholder="搜尋名稱、編號..."
+                                    className="pl-10 pr-4 py-3 border-2 border-gray-300 rounded-xl w-full focus:ring-4 focus:ring-purple-100 focus:border-purple-500 outline-none transition-all"
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Table Content */}
+                        <div className="flex-1 overflow-auto bg-white p-0">
+                            <table className="w-full text-left border-collapse prose-table">
+                                <thead className="bg-purple-50 sticky top-0 z-10 shadow-sm">
+                                    <tr>
+                                        <th className="p-2 font-black text-purple-900 border-b-2 border-purple-100 w-12 text-center">收藏</th>
+                                        <th className="p-2 font-black text-purple-900 border-b-2 border-purple-100 w-12 text-center">編號</th>
+                                        <th className="p-4 font-black text-purple-900 border-b-2 border-purple-100 w-48">成語名稱</th>
+                                        <th className="p-4 font-black text-purple-900 border-b-2 border-purple-100">釋義</th>
+                                        <th className="p-4 font-black text-purple-900 border-b-2 border-purple-100 w-96">應用範例</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100">
+                                    {filteredItems.length > 0 ? (
+                                        filteredItems.map(item => (
+                                            <tr key={item.id} className="hover:bg-purple-50/50 transition-colors">
+                                                <td className="p-2 text-center bg-gray-50/30">
+                                                    <button onClick={() => toggleFavorite(item.id)} className="transition-transform active:scale-95 hover:scale-110">
+                                                        <Icon path={icons.heart} className={`w-6 h-6 ${favorites.includes(item.id) ? "text-red-500" : "text-gray-300 hover:text-red-400"}`} fill={favorites.includes(item.id) ? "currentColor" : "none"} />
+                                                    </button>
+                                                </td>
+                                                <td className="p-2 text-center font-mono text-gray-500 font-bold bg-gray-50/50">{item.id}</td>
+                                                <td className="p-4 font-bold text-gray-900 text-lg sticky left-0 bg-white md:static">{item.term}</td>
+                                                <td className="p-4 text-gray-600 leading-relaxed text-sm">{item.definition}</td>
+                                                <td className="p-4 text-gray-500 italic text-sm border-l-4 border-gray-100 bg-gray-50/30">
+                                                    {item.sentence1}
+                                                </td>
+                                            </tr>
+                                        ))
+                                    ) : (
+                                        <tr>
+                                            <td colSpan="5" className="p-12 text-center text-gray-400">
+                                                <div className="flex flex-col items-center">
+                                                    <Icon path={icons.search} className="w-12 h-12 mb-2 opacity-50"/>
+                                                    <span className="text-lg">找不到符合「{searchTerm}」的資料</span>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div className="bg-gray-50 p-2 text-center text-xs text-gray-400 border-t border-gray-200">
+                            顯示 {filteredItems.length} 筆資料
+                        </div>
                     </div>
                 </div>
             );
         };
 
-        const MenuView = ({ 
-            userName, setUserName, showNameWarning, mistakeLog, favorites, parsedData, 
-            onStartLearn, onStartQuiz, onViewHistory, onViewMistakes, onViewTable, onPrint,
-            onLogin, isLocked, onQuickLogin, globalUsers, onLogout, onDeleteUser,
-            triggerMusic, connectionStatus, completedDays
+        const LearnView = ({ 
+            items, learnPage, setLearnPage, favorites, toggleFavorite, completedDays, onMenu 
         }) => {
-            const totalPages = Math.ceil(parsedData["精選成語"].length / ITEMS_PER_PAGE);
-            const progressPercent = Math.min(100, Math.round((completedDays.length / totalPages) * 100));
+            const totalPages = Math.ceil(items.length / ITEMS_PER_PAGE);
+            const currentItems = items.slice(learnPage * ITEMS_PER_PAGE, (learnPage + 1) * ITEMS_PER_PAGE);
+            const scrollRef = useRef(null);
+
+            useEffect(() => {
+                if (scrollRef.current) scrollRef.current.scrollTop = 0;
+                window.scrollTo(0, 0);
+            }, [learnPage]);
 
             return (
-                <div className="max-w-6xl mx-auto px-4 py-8 animate-fade-in-up mt-16 no-print">
-                    {/* Dashboard Header */}
-                    <div className="bg-white/90 backdrop-blur-md rounded-3xl p-6 md:p-8 shadow-xl border border-amber-100 mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                        <div>
-                            <h1 className="text-4xl md:text-5xl font-extrabold text-amber-900 tracking-tight flex items-center gap-3 font-serif drop-shadow-sm mb-2">
-                                <span className="text-5xl md:text-6xl filter drop-shadow-md">📜</span> 
-                                <div>
-                                    成語大師 <span className="text-lg md:text-xl block md:inline text-amber-700 font-normal">精選成語版</span>
-                                </div>
-                            </h1>
-                            <p className="text-gray-500 font-bold ml-2">互動式學習系統 v2.0</p>
+                <div className="max-w-4xl mx-auto px-4 py-6 mt-12" ref={scrollRef}>
+                    <div className="bg-white/90 backdrop-blur-md p-4 rounded-xl shadow-sm mb-8 flex flex-col md:flex-row justify-between items-center sticky top-16 z-30 border-b-2 border-amber-200">
+                        <div className="flex items-center gap-4 mb-4 md:mb-0 w-full md:w-auto">
+                            <button onClick={onMenu} className="text-gray-500 hover:text-gray-900 flex items-center whitespace-nowrap bg-gray-100 px-3 py-2 rounded-lg font-bold"><Icon path={icons.menu} className="w-5 h-5 mr-2"/> 選單</button>
+                            <h2 className="text-2xl font-black flex items-center whitespace-nowrap text-amber-900">
+                                📖 典故卷軸
+                            </h2>
                         </div>
                         
-                        {/* 狀態指示燈 & 進度 */}
-                        <div className="flex flex-col items-end gap-3 w-full md:w-auto">
-                            <div className="flex items-center bg-gray-50 px-3 py-1.5 rounded-full border border-gray-200 shadow-inner text-sm font-bold text-gray-700">
-                                <span className={`status-dot ${
-                                    connectionStatus === 'loading' ? 'status-loading' : 
-                                    connectionStatus === 'success' ? 'status-success' : 'status-error'
-                                }`}></span>
-                                {connectionStatus === 'loading' ? '雲端讀取中...' : 
-                                 connectionStatus === 'success' ? '雲端已同步' : '雲端連線失敗'}
-                            </div>
-                            
-                            {/* Progress Bar */}
-                            {isLocked && (
-                                <div className="w-full md:w-64">
-                                    <div className="flex justify-between text-xs font-bold text-amber-800 mb-1">
-                                        <span>修煉進度</span>
-                                        <span>{progressPercent}% (卷 {completedDays.length}/{totalPages})</span>
-                                    </div>
-                                    <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden shadow-inner">
-                                        <div 
-                                            className="bg-amber-500 h-3 rounded-full transition-all duration-1000 ease-out flex items-center justify-end" 
-                                            style={{ width: `${progressPercent}%` }}
-                                        >
-                                            {progressPercent > 5 && <div className="w-1.5 h-1.5 bg-white/50 rounded-full mr-1"></div>}
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                        {/* Left Column: User Profile & Login */}
-                        <div className="lg:col-span-4 space-y-6">
-                            <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 shadow-md border-2 border-amber-200 h-full flex flex-col">
-                                <h3 className="text-xl font-black text-amber-900 mb-4 flex items-center border-b border-amber-100 pb-2">
-                                    <Icon path={icons.login} className="w-6 h-6 mr-2"/> 挑戰者登入
-                                </h3>
-                                
-                                <div className="flex-1 flex flex-col gap-4">
-                                    <div className="relative">
-                                        <label className="block text-sm font-bold text-gray-500 mb-1">主公姓名</label>
-                                        <input 
-                                            type="text" 
-                                            value={userName}
-                                            onChange={(e) => !isLocked && setUserName(e.target.value)}
-                                            placeholder="請輸入姓名"
-                                            disabled={isLocked}
-                                            className={`w-full border-2 rounded-xl px-4 py-3 outline-none transition-all text-lg font-bold ${isLocked ? 'bg-green-50 text-green-800 border-green-200 cursor-not-allowed' : (showNameWarning ? 'border-red-500 bg-red-50 ring-2 ring-red-200 animate-shake' : 'border-amber-300 focus:ring-4 focus:ring-amber-200')}`}
-                                        />
-                                        {showNameWarning && <div className="text-xs text-red-500 font-bold mt-1 ml-1 animate-pulse">* 請先輸入姓名</div>}
-                                    </div>
-
-                                    {!isLocked ? (
-                                        <button onClick={() => { onLogin(); triggerMusic(); }} className="w-full bg-amber-600 hover:bg-amber-700 text-white py-3 rounded-xl text-lg font-bold shadow-md transform active:scale-95 transition-all flex justify-center items-center">
-                                            <Icon path={icons.login} className="w-5 h-5 mr-2"/> 開始冒險
-                                        </button>
-                                    ) : (
-                                        <div className="grid grid-cols-2 gap-3">
-                                            <button onClick={onLogout} className="bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 rounded-xl font-bold transition-colors flex justify-center items-center">
-                                                <Icon path={icons.logout} className="w-4 h-4 mr-2"/> 登出
-                                            </button>
-                                            <button onClick={onDeleteUser} className="bg-red-50 hover:bg-red-100 text-red-600 py-3 rounded-xl font-bold transition-colors flex justify-center items-center" title="刪除使用者">
-                                                <Icon path={icons.userX} className="w-4 h-4 mr-2"/> 刪除
-                                            </button>
-                                        </div>
-                                    )}
-
-                                    {/* 快速登入 */}
-                                    {!isLocked && (
-                                        <div className="mt-4 bg-amber-50 rounded-xl p-3 border border-amber-100 flex-1">
-                                            <div className="text-xs text-amber-800 font-bold mb-2 flex items-center">
-                                                <Icon path={icons.lightning} className="w-3 h-3 mr-1"/> 歷史挑戰者
-                                            </div>
-                                            <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto content-start">
-                                                {globalUsers.length > 0 ? (
-                                                    globalUsers.map((u, idx) => (
-                                                        <button 
-                                                            key={idx}
-                                                            onClick={() => { onQuickLogin(u); triggerMusic(); }}
-                                                            className="bg-white hover:bg-blue-50 text-blue-600 px-3 py-1.5 rounded-lg text-sm font-bold border border-blue-100 shadow-sm transition-all hover:-translate-y-0.5"
-                                                        >
-                                                            {u}
-                                                        </button>
-                                                    ))
-                                                ) : (
-                                                    <div className="w-full text-center text-gray-400 text-xs py-4 italic">
-                                                        尚無紀錄，歡迎加入！
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Right Column: Main Actions */}
-                        <div className="lg:col-span-8 space-y-6">
-                            {/* Main Cards */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                {/* 學習模式 */}
-                                <div className="bg-white/90 backdrop-blur rounded-2xl p-6 shadow-md border-2 border-amber-100 hover:border-amber-300 transition-all group relative overflow-hidden">
-                                    <div className="absolute -right-6 -top-6 w-24 h-24 bg-amber-100 rounded-full opacity-50 group-hover:scale-150 transition-transform duration-500"></div>
-                                    <h3 className="text-2xl font-black text-amber-900 mb-2 relative z-10">📖 研讀成語</h3>
-                                    <p className="text-gray-500 mb-6 relative z-10 h-12">瀏覽所有成語，學習釋義與例句，奠定基礎。</p>
-                                    <div className="flex gap-3 relative z-10">
-                                        <button onClick={() => { onStartLearn('精選成語'); triggerMusic(); }} className="flex-1 bg-amber-100 hover:bg-amber-200 text-amber-800 py-3 rounded-xl font-bold transition-colors flex items-center justify-center">
-                                            <Icon path={icons.book} className="w-5 h-5 mr-2"/> 開始研讀
-                                        </button>
-                                    </div>
-                                </div>
-
-                                {/* 測驗模式 */}
-                                <div className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl p-6 shadow-lg text-white hover:shadow-xl transition-all group relative overflow-hidden transform hover:-translate-y-1">
-                                    <div className="absolute -right-6 -bottom-6 w-32 h-32 bg-white/20 rounded-full opacity-50 group-hover:scale-150 transition-transform duration-500"></div>
-                                    <h3 className="text-2xl font-black mb-2 relative z-10">⚔️ 成語挑戰</h3>
-                                    <p className="text-amber-100 mb-6 relative z-10 h-12">隨機出題，測試你的成語實力，累積戰功！</p>
-                                    <div className="flex gap-3 relative z-10">
-                                        <button onClick={() => { onStartQuiz('精選成語'); triggerMusic(); }} className="flex-1 bg-white text-amber-600 hover:bg-amber-50 py-3 rounded-xl font-bold shadow-md transition-colors flex items-center justify-center">
-                                            <Icon path={icons.play} className="w-5 h-5 mr-2"/> 開始挑戰
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Secondary Actions Grid */}
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                <button onClick={onViewMistakes} className="bg-white/80 hover:bg-red-50 border-2 border-red-100 hover:border-red-300 p-4 rounded-2xl shadow-sm flex flex-col items-center justify-center gap-2 transition-all">
-                                    <div className="bg-red-100 text-red-500 p-3 rounded-full mb-1"><Icon path={icons.alert} className="w-6 h-6"/></div>
-                                    <span className="font-bold text-gray-700">錯題本</span>
-                                    <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full">{mistakeLog.length}</span>
-                                </button>
-
-                                <button onClick={onViewHistory} className="bg-white/80 hover:bg-blue-50 border-2 border-blue-100 hover:border-blue-300 p-4 rounded-2xl shadow-sm flex flex-col items-center justify-center gap-2 transition-all">
-                                    <div className="bg-blue-100 text-blue-500 p-3 rounded-full mb-1"><Icon path={icons.history} className="w-6 h-6"/></div>
-                                    <span className="font-bold text-gray-700">戰績表</span>
-                                </button>
-
-                                <button onClick={onViewTable} className="bg-white/80 hover:bg-purple-50 border-2 border-purple-100 hover:border-purple-300 p-4 rounded-2xl shadow-sm flex flex-col items-center justify-center gap-2 transition-all">
-                                    <div className="bg-purple-100 text-purple-500 p-3 rounded-full mb-1"><Icon path={icons.list} className="w-6 h-6"/></div>
-                                    <span className="font-bold text-gray-700">總覽表</span>
-                                </button>
-
-                                <button onClick={onPrint} className="bg-white/80 hover:bg-gray-50 border-2 border-gray-200 hover:border-gray-400 p-4 rounded-2xl shadow-sm flex flex-col items-center justify-center gap-2 transition-all">
-                                    <div className="bg-gray-100 text-gray-600 p-3 rounded-full mb-1"><Icon path={icons.print} className="w-6 h-6"/></div>
-                                    <span className="font-bold text-gray-700">列印考卷</span>
-                                </button>
-                            </div>
-
-                            {/* 收藏夾捷徑 */}
-                            <div className="bg-gradient-to-r from-pink-50 to-rose-50 rounded-2xl p-4 border border-rose-100 flex items-center justify-between shadow-sm">
-                                <div className="flex items-center gap-4">
-                                    <div className="bg-white p-3 rounded-xl shadow-sm text-rose-500"><Icon path={icons.heart} className="w-6 h-6" fill="currentColor"/></div>
-                                    <div>
-                                        <h4 className="font-black text-gray-800">我的收藏</h4>
-                                        <p className="text-xs text-gray-500">已收藏 {favorites.length} 個成語</p>
-                                    </div>
-                                </div>
-                                <div className="flex gap-2">
-                                    <button onClick={() => { onStartLearn('收藏夾'); triggerMusic(); }} disabled={favorites.length===0} className="px-4 py-2 bg-white text-rose-600 rounded-lg text-sm font-bold shadow-sm hover:shadow disabled:opacity-50">溫故</button>
-                                    <button onClick={() => { onStartQuiz('收藏夾'); triggerMusic(); }} disabled={favorites.length===0} className="px-4 py-2 bg-rose-500 text-white rounded-lg text-sm font-bold shadow-sm hover:bg-rose-600 disabled:opacity-50">知新</button>
-                                </div>
-                            </div>
+                        <div className="flex overflow-x-auto max-w-full w-full md:w-auto pb-2 md:pb-0 gap-2 mt-2 md:mt-0 no-scrollbar">
+                            {Array.from({ length: totalPages }).map((_, i) => {
+                                const isCompleted = completedDays.includes(`精選成語-${i}`);
+                                return (<button key={i} onClick={() => setLearnPage(i)} className={`px-4 py-2 rounded-lg text-sm font-bold whitespace-nowrap flex items-center gap-2 transition-all flex-shrink-0 ${learnPage === i ? 'bg-amber-600 text-white shadow-md transform scale-105' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>卷 {i + 1} {isCompleted && <span className="bg-green-400 text-white text-[10px] px-1.5 py-0.5 rounded-full">✓</span>}</button>);
+                            })}
                         </div>
                     </div>
                     
-                    <div className="mt-12 text-center text-gray-500 text-sm font-medium bg-white/50 backdrop-blur rounded-full py-2 inline-block px-6 mx-auto w-full md:w-auto">
-                        &copy; 2025 成語大師 • 互動式學習系統
+                    <div className="space-y-8">
+                        {currentItems.map((item, idx) => (
+                            <div key={item.id} className="bg-white/95 backdrop-blur-sm rounded-2xl p-6 md:p-8 shadow-sm border border-amber-100 relative group hover:shadow-lg transition-all animate-fade-in-up" style={{animationDelay: `${idx * 0.05}s`}}>
+                                <button onClick={() => toggleFavorite(item.id)} className="absolute top-6 right-6 text-gray-200 hover:text-red-500 z-10 transition-colors">
+                                    <Icon path={icons.heart} className={`w-8 h-8 drop-shadow-sm ${favorites.includes(item.id) ? "text-red-500" : ""}`} fill={favorites.includes(item.id) ? "currentColor" : "none"} />
+                                </button>
+                                <div className="flex flex-col md:flex-row gap-8">
+                                    <div className="flex-1">
+                                        <div className="flex items-baseline gap-3 mb-3 flex-wrap pr-10">
+                                            <span className="text-amber-300 font-mono text-xl font-black">#{String(item.id).padStart(3,'0')}</span>
+                                            <h3 className="text-3xl font-black text-gray-900 tracking-tight">{item.term}</h3>
+                                        </div>
+                                        <div className="bg-gradient-to-r from-amber-50 to-transparent p-4 rounded-xl text-amber-900 mb-6 text-lg font-medium border-l-8 border-amber-400">
+                                            {item.definition}
+                                        </div>
+                                        
+                                        <div className="text-gray-600 leading-relaxed pl-4 italic border-l-4 border-gray-300 text-lg bg-gray-50 py-2 pr-2 rounded-r-lg">
+                                            <span className="font-bold not-italic text-gray-400 mr-2 text-sm">應用範例</span>
+                                            {item.sentence1 && item.sentence1.split(item.term).map((part, i, arr) => (<React.Fragment key={i}>{part}{i < arr.length - 1 && <span className="text-amber-700 font-bold mx-1 border-b-2 border-amber-700">{item.term}</span>}</React.Fragment>))}
+                                        </div>
+                                    </div>
+                                    
+                                    {/* Image Section - 改用情境描述 */}
+                                    <div className="w-full md:w-96 flex-shrink-0 flex flex-col items-center">
+                                        <div className="bg-white p-2 border-2 border-gray-100 rounded-2xl w-full shadow-sm">
+                                            <div className="rounded-xl overflow-hidden bg-gray-200 aspect-[9/16] relative group-img cursor-pointer w-full">
+                                                <img 
+                                                    src={`images/p${String(item.id).padStart(3, '0')}.jpg`}
+                                                    alt={item.scene} 
+                                                    loading="lazy"
+                                                    className="w-full h-full object-cover transition-transform duration-700 hover:scale-110"
+                                                    onError={(e) => {
+                                                        e.target.onerror = null; 
+                                                        e.target.parentNode.innerHTML = `
+                                                            <div class="w-full h-full flex flex-col items-center justify-center bg-gray-100 text-gray-400 p-4 text-center">
+                                                                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="mb-2 opacity-50"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                                                                <span class="text-sm font-bold text-gray-500">${item.scene}</span>
+                                                            </div>
+                                                        `;
+                                                    }}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                    <div className="h-20"></div>
+                </div>
+            );
+        };
+
+        const QuizView = ({ 
+            questions, score, userName, combo, onAnswer, onFinish, onMenu, onViewHistory, favorites, toggleFavorite,
+            totalItems, quizPage, onPageChange, completedDays 
+        }) => {
+            const [showResult, setShowResult] = useState(false);
+            const isFinished = questions.length > 0 && questions.every(q => q.userAnswer !== null);
+            const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+
+            useEffect(() => { 
+                if (isFinished && !showResult) { 
+                    const timer = setTimeout(() => {
+                        onFinish(); 
+                        setShowResult(true); 
+                    }, 800); 
+                    return () => clearTimeout(timer);
+                } 
+            }, [isFinished]);
+
+            if (showResult) {
+                 return (
+                    <div className="max-w-2xl mx-auto pt-10 px-4 animate-fade-in-up mt-12">
+                        <div className="bg-white rounded-3xl shadow-2xl overflow-hidden text-center border-4 border-amber-400">
+                            <div className="bg-amber-500 p-10 text-white relative overflow-hidden">
+                                <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
+                                <h2 className="text-4xl font-black mb-2 font-serif relative z-10">戰役結束</h2>
+                                <p className="opacity-90 font-bold text-lg relative z-10">主公 {userName} 辛苦了</p>
+                            </div>
+                            <div className="p-10">
+                                <div className="text-8xl font-black text-amber-600 mb-2 font-mono tracking-tighter">{score} <span className="text-3xl text-gray-300 font-bold">/ {questions.length}</span></div>
+                                <div className="text-gray-400 font-bold mb-8 uppercase tracking-widest">本次戰功</div>
+                                
+                                <div className="flex justify-center gap-4 mb-10">
+                                    <div className="flex-1 bg-green-50 text-green-700 py-4 rounded-2xl font-black text-xl border-2 border-green-200">
+                                        大捷 {score}
+                                    </div>
+                                    <div className="flex-1 bg-red-50 text-red-700 py-4 rounded-2xl font-black text-xl border-2 border-red-200">
+                                        失利 {questions.length - score}
+                                    </div>
+                                </div>
+                                
+                                <div className="flex flex-col gap-4">
+                                    <button onClick={onMenu} className="w-full py-4 bg-gray-100 hover:bg-gray-200 rounded-2xl font-black text-gray-700 text-xl transition-colors">返回大營</button>
+                                    <button onClick={onViewHistory} className="w-full py-4 bg-amber-600 hover:bg-amber-700 rounded-2xl font-black text-white shadow-xl shadow-amber-200 text-xl transition-all transform active:scale-95">查看詳細戰報</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="max-w-4xl mx-auto pb-20 px-4 mt-12">
+                    <div className="bg-white/95 backdrop-blur shadow-sm p-4 rounded-b-2xl mb-8 sticky top-16 z-30 border-t-4 border-amber-500 flex flex-col md:flex-row justify-between items-center transition-all">
+                        <div className="flex items-center gap-4 mb-4 md:mb-0 w-full md:w-auto justify-between md:justify-start">
+                            <button onClick={onMenu} className="text-gray-500 text-sm flex items-center hover:text-red-600 font-bold bg-gray-100 px-3 py-2 rounded-lg transition-colors"><Icon path={icons.left} className="w-4 h-4 mr-1"/> 撤退</button>
+                            <div className="font-bold text-xl flex items-center gap-3">
+                                <span>{userName}</span>
+                                <span className="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm font-black border border-amber-200">戰功: {score}</span>
+                            </div>
+                            <div className="w-24 text-right">
+                                {combo > 1 && <div className="text-orange-600 font-black animate-pop text-2xl drop-shadow-sm inline-block">🔥 x{combo}</div>}
+                            </div>
+                        </div>
+                        <div className="flex overflow-x-auto max-w-full w-full md:w-auto pb-1 md:pb-0 gap-2 no-scrollbar">
+                             {Array.from({ length: totalPages }).map((_, i) => {
+                                const isCompleted = completedDays.includes(`精選成語-${i}`);
+                                return (
+                                    <button key={i} onClick={() => onPageChange(i)} 
+                                        className={`px-3 py-1.5 rounded-md text-xs font-bold whitespace-nowrap flex items-center gap-1 transition-all flex-shrink-0
+                                        ${quizPage === i ? 'bg-amber-600 text-white shadow-md' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
+                                        卷{i + 1}
+                                        {isCompleted && <span className="bg-green-400 text-white text-[10px] w-3 h-3 flex items-center justify-center rounded-full">✓</span>}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    <div className="space-y-8">
+                        {questions.map((q, idx) => (
+                            <div key={idx} className={`bg-white/95 backdrop-blur-sm rounded-3xl shadow-sm border-4 overflow-hidden transition-all duration-500 relative ${q.userAnswer === null ? 'border-transparent shadow-md' : (q.isCorrect ? 'border-green-200 bg-green-50/20' : 'border-red-200 bg-red-50/20')}`}>
+                                <button onClick={() => toggleFavorite(q.id)} className={`absolute top-5 right-5 z-10 transition-colors p-2 rounded-full bg-white/50 hover:bg-white ${favorites.includes(q.id) ? 'text-red-500' : 'text-gray-300 hover:text-red-500'}`}>
+                                    <Icon path={icons.heart} className="w-7 h-7" fill={favorites.includes(q.id) ? "currentColor" : "none"} />
+                                </button>
+                                <div className="p-8 border-b border-gray-100">
+                                    <div className="flex justify-between items-center mb-6">
+                                        <span className="font-black text-amber-900 tracking-wider text-sm bg-amber-100 px-3 py-1 rounded-full border border-amber-200">問題 {idx + 1}</span>
+                                        {q.userAnswer !== null && (q.isCorrect ? 
+                                            <span className="text-green-600 font-black flex items-center text-lg animate-pop mr-12"><Icon path={icons.check} className="w-6 h-6 mr-1"/> 正確</span> : 
+                                            <span className="text-red-600 font-black flex items-center text-lg animate-shake mr-12"><Icon path={icons.alert} className="w-6 h-6 mr-1"/> 錯誤</span>
+                                        )}
+                                    </div>
+                                    <div className="text-2xl md:text-3xl font-bold text-gray-800 leading-relaxed text-justify">
+                                        {/* 使用 sentence2 作為題目 */}
+                                        {q.sentence2 && q.sentence2.split(q.term).map((part, i, arr) => (
+                                            <span key={i}>
+                                                {part}
+                                                {i < arr.length - 1 && (
+                                                    <span className="inline-block w-32 border-b-4 border-gray-300 mx-2 align-baseline bg-gray-100 rounded px-2 h-8 relative top-1">
+                                                        {q.userAnswer !== null && !q.isCorrect && <span className="absolute -top-8 left-0 text-sm text-green-600 font-bold whitespace-nowrap">{q.term}</span>}
+                                                    </span>
+                                                )}
+                                            </span>
+                                        ))}。
+                                    </div>
+                                </div>
+                                <div className="p-6 bg-gray-50/50">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {q.options.map(opt => {
+                                            let btnClass = "p-5 rounded-2xl border-2 text-left font-bold text-xl transition-all relative overflow-hidden "; 
+                                            if (q.userAnswer === null) btnClass += "bg-white border-gray-200 hover:border-amber-400 hover:shadow-md cursor-pointer active:scale-[0.98] text-gray-700";
+                                            else { 
+                                                if (opt.id === q.id) btnClass += "bg-green-100 border-green-500 text-green-800 ring-2 ring-green-200 shadow-md"; 
+                                                else if (opt.id === q.userAnswer) btnClass += "bg-red-100 border-red-500 text-red-800 opacity-80"; 
+                                                else btnClass += "bg-gray-50 border-gray-200 text-gray-300 opacity-40 grayscale"; 
+                                            }
+                                            return (
+                                                <button key={opt.id} onClick={() => onAnswer(idx, opt.id)} disabled={q.userAnswer !== null} className={btnClass}>
+                                                    {opt.term}
+                                                    {q.userAnswer !== null && opt.id === q.id && <div className="absolute right-4 top-1/2 -translate-y-1/2 text-green-600 bg-white rounded-full p-1"><Icon path={icons.check} className="w-5 h-5"/></div>}
+                                                </button>
+                                            )
+                                        })}
+                                    </div>
+                                </div>
+                                {q.userAnswer !== null && !q.isCorrect && (
+                                    <div className="p-6 bg-red-50/50 border-t border-red-100 animate-fade-in-up">
+                                        <div className="bg-white rounded-xl p-5 border border-red-200 flex flex-col md:flex-row gap-5 items-start shadow-sm">
+                                            <div className="w-full md:w-40 aspect-video rounded-lg overflow-hidden border border-gray-200 bg-gray-100 flex-shrink-0">
+                                                <img 
+                                                    src={`images/p${String(q.id).padStart(3, '0')}.jpg`}
+                                                    className="w-full h-full object-cover" 
+                                                    onError={(e) => {
+                                                        e.target.onerror = null; 
+                                                        e.target.parentNode.innerHTML = `<div class="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400 text-xs p-2 text-center">${q.scene}</div>`;
+                                                    }}
+                                                />
+                                            </div>
+                                            <div className="flex-1">
+                                                <div className="text-sm font-black text-red-800 mb-1 flex items-center gap-2 uppercase tracking-wide">
+                                                    <Icon path={icons.book} className="w-4 h-4"/> 成語釋義
+                                                </div>
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <div className="text-2xl font-black text-gray-900">{q.term}</div>
+                                                </div>
+                                                <div className="text-gray-700 text-base leading-relaxed">{q.definition}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        };
+
+        const HistoryView = ({ historyLog, setHistoryLog, onMenu }) => {
+            const [selectedLog, setSelectedLog] = useState(null);
+            
+            const renderQuestionSentence = (sentence, term) => { if (!sentence) return <span className="text-gray-400 italic">（例句資料缺失）</span>; return sentence.split(term).map((part, i, arr) => (<span key={i}>{part}{i < arr.length - 1 && <span className="inline-block min-w-[3rem] border-b-2 border-gray-400 mx-1 align-bottom text-transparent select-none bg-gray-200/50 rounded h-6"></span>}</span>)); };
+
+            if (selectedLog) {
+                return (
+                    <div className="w-full max-w-4xl mx-auto bg-white/95 backdrop-blur-md min-h-screen p-6 md:p-8 shadow-2xl animate-fade-in-up mt-12">
+                        <div className="flex justify-between items-center mb-8 pb-4 border-b border-gray-200 sticky top-16 bg-white z-20 pt-4">
+                            <button onClick={() => setSelectedLog(null)} className="flex items-center text-gray-500 hover:text-amber-800 font-bold text-lg px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"><Icon path={icons.left} className="w-6 h-6 mr-1"/> 返回</button>
+                            <div className="text-right">
+                                <h2 className="text-2xl font-black text-gray-800">戰役回放</h2>
+                                <p className="text-gray-500 text-sm mt-1 font-mono">{selectedLog.date}</p>
+                            </div>
+                        </div>
+                        <div className="space-y-6">
+                            <div className="flex justify-center mb-8">
+                                <div className="text-center">
+                                    <div className="text-sm text-gray-400 font-bold uppercase mb-1">總得分</div>
+                                    <div className="text-5xl font-black text-amber-600">{selectedLog.score} <span className="text-2xl text-gray-300">/ {selectedLog.total}</span></div>
+                                </div>
+                            </div>
+                            {selectedLog.details.map((d, i) => (
+                                <div key={i} className={`p-6 rounded-2xl border-l-8 shadow-sm ${d.isCorrect ? 'border-green-400 bg-green-50/30' : 'border-red-400 bg-red-50/30'}`}>
+                                    <div className="mb-3 font-bold text-gray-800 text-xl leading-relaxed">{renderQuestionSentence(d.sentence, d.term)}</div>
+                                    <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-6 bg-white/50 p-3 rounded-lg">
+                                        <div className="flex items-center">
+                                            <span className="text-gray-400 text-xs font-bold uppercase mr-2">您的選擇</span>
+                                            <span className={`text-lg font-bold ${d.isCorrect ? "text-green-700" : "text-red-600 line-through decoration-2"}`}>{d.userAnswer}</span>
+                                        </div>
+                                        {!d.isCorrect && (
+                                            <div className="flex items-center">
+                                                <span className="text-gray-400 text-xs font-bold uppercase mr-2">正解</span>
+                                                <span className="text-green-700 text-lg font-black">{d.correctAnswer}</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="h-20"></div>
+                    </div>
+                )
+            }
+            return (
+                <div className="max-w-4xl mx-auto px-4 py-8 mt-12">
+                    <div className="flex items-center mb-8">
+                        <button onClick={onMenu} className="mr-4 p-3 bg-white rounded-xl shadow border border-gray-200 hover:bg-gray-50"><Icon path={icons.left} className="w-5 h-5"/></button>
+                        <h2 className="text-3xl font-black text-gray-800 flex items-center gap-3">📜 歷史戰績 <span className="text-sm font-normal text-gray-500 bg-gray-100 px-2 py-1 rounded-full">{historyLog.length} 場</span></h2>
+                    </div>
+                    {historyLog.length === 0 ? (
+                        <div className="text-center py-32 text-gray-400 border-2 border-dashed border-gray-200 rounded-3xl bg-white/80 backdrop-blur">
+                            <Icon path={icons.history} className="w-16 h-16 mx-auto mb-4 text-gray-300"/>
+                            <p className="text-xl font-bold">尚無戰役紀錄</p>
+                            <p className="text-sm mt-2">快去挑戰吧！</p>
+                        </div>
+                    ) : (
+                        <div className="bg-white/95 backdrop-blur-md rounded-3xl shadow-lg overflow-hidden border border-gray-200">
+                            <table className="w-full text-left border-collapse">
+                                <thead className="bg-amber-50 border-b border-amber-100">
+                                    <tr>
+                                        <th className="p-5 font-black text-amber-900 text-sm uppercase tracking-wider hidden md:table-cell">日期</th>
+                                        <th className="p-5 font-black text-amber-900 text-sm uppercase tracking-wider">主公</th>
+                                        <th className="p-5 font-black text-amber-900 text-sm uppercase tracking-wider">戰功</th>
+                                        <th className="p-5 font-black text-amber-900 text-sm uppercase tracking-wider text-right">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100">
+                                    {historyLog.map(log => (
+                                        <tr key={log.id} className="hover:bg-amber-50/50 transition-colors group">
+                                            <td className="p-5 text-gray-500 text-sm font-mono hidden md:table-cell">{log.date.split(',')[0]}</td>
+                                            <td className="p-5 font-bold text-gray-800">
+                                                <div className="md:hidden text-xs text-gray-400 mb-1">{log.date.split(',')[0]}</div>
+                                                {log.userName}
+                                            </td>
+                                            <td className="p-5">
+                                                <span className={`font-black px-3 py-1 rounded-lg text-sm ${log.score === log.total ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-gray-100 text-gray-700 border border-gray-200'}`}>
+                                                    {log.score} <span className="text-gray-400 font-normal">/ {log.total}</span>
+                                                </span>
+                                            </td>
+                                            <td className="p-5 text-right">
+                                                <button onClick={() => setSelectedLog(log)} className="text-amber-600 hover:text-white hover:bg-amber-600 px-4 py-2 rounded-lg text-sm font-bold transition-all border border-amber-200 hover:border-amber-600">
+                                                    查看
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                     <div className="text-center mt-12 pb-10">
+                         <button onClick={() => {if(confirm('確定焚毀所有戰報？此操作無法復原！')) setHistoryLog([])}} className="text-red-400 hover:text-red-600 text-sm flex items-center justify-center mx-auto hover:bg-red-50/80 px-4 py-2 rounded-lg transition-colors">
+                             <Icon path={icons.trash} className="w-4 h-4 mr-2"/> 清除所有紀錄
+                        </button>
                     </div>
                 </div>
             );
@@ -837,22 +1134,17 @@
 
         const MistakeView = ({ mistakes, mistakeLog, setMistakeLog, onMenu, onReviewAll }) => {
             return (
-                <div className="max-w-7xl mx-auto px-4 py-8 mt-12 animate-fade-in-up">
+                <div className="max-w-4xl mx-auto px-4 py-8 mt-12">
                     <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
                         <div className="flex items-center">
                             <button onClick={onMenu} className="mr-4 p-3 bg-white rounded-xl shadow border border-gray-200 hover:bg-gray-50"><Icon path={icons.left} className="w-5 h-5"/></button>
                             <h2 className="text-3xl font-black text-gray-800 flex items-center"><Icon path={icons.alert} className="w-8 h-8 text-red-500 mr-3"/> 錯題軍令狀</h2>
                         </div>
                         {mistakes.length > 0 && (
-                            <div className="flex gap-2">
-                                <button onClick={onReviewAll} className="px-6 py-3 bg-red-600 text-white rounded-xl shadow-lg hover:bg-red-700 font-bold flex items-center justify-center">
-                                    <Icon path={icons.play} className="w-5 h-5 mr-2" fill="currentColor"/>
-                                    立即複習 ({mistakes.length})
-                                </button>
-                                <button onClick={() => {if(confirm('確定清空錯題本？這將移除所有錯誤紀錄。')) { setMistakeLog([]); } }} className="px-6 py-3 bg-white text-gray-500 rounded-xl shadow border border-gray-200 hover:bg-gray-50 font-bold">
-                                    <Icon path={icons.trash} className="w-5 h-5"/>
-                                </button>
-                            </div>
+                            <button onClick={onReviewAll} className="w-full md:w-auto px-8 py-3 bg-red-600 text-white rounded-xl shadow-lg hover:bg-red-700 font-bold animate-pulse flex items-center justify-center">
+                                <Icon path={icons.play} className="w-5 h-5 mr-2" fill="currentColor"/>
+                                立即複習 ({mistakes.length})
+                            </button>
                         )}
                     </div>
 
@@ -863,36 +1155,43 @@
                             <p className="text-gray-500">目前沒有錯題紀錄，繼續保持！</p>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div className="grid gap-4">
                             {mistakes.map(item => { 
                                 const log = mistakeLog.find(m => m.id === item.id); 
                                 return (
-                                    <div key={item.id} className="bg-white rounded-2xl p-6 shadow-sm border-2 border-transparent hover:border-red-200 hover:shadow-md transition-all relative overflow-hidden group">
-                                        <div className="absolute top-0 right-0 bg-red-100 text-red-600 text-xs font-bold px-3 py-1 rounded-bl-xl border-l border-b border-red-200">
-                                            錯誤 {log.count} 次
+                                    <div key={item.id} className="bg-white/95 backdrop-blur-sm p-6 rounded-2xl shadow-sm border-l-8 border-red-400 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 hover:shadow-md transition-shadow">
+                                        <div>
+                                            <div className="flex items-center gap-3 mb-2">
+                                                <h3 className="text-2xl font-black text-gray-800">{item.term}</h3>
+                                                <span className="text-xs font-bold text-red-600 bg-red-100 px-2 py-1 rounded-md border border-red-200">錯誤 {log.count} 次</span>
+                                            </div>
+                                            <p className="text-gray-600 text-base font-medium">{item.definition}</p>
                                         </div>
-                                        
-                                        <h3 className="text-3xl font-black text-gray-800 mb-3 mt-2">{item.term}</h3>
-                                        <p className="text-gray-600 text-sm leading-relaxed mb-4 min-h-[3rem]">{item.definition}</p>
-                                        
-                                        <div className="border-t border-gray-100 pt-3 flex justify-between items-center text-xs text-gray-400 font-mono">
-                                            <span>#{String(item.id).padStart(3,'0')}</span>
-                                            <span>{new Date(log.lastMissed).toLocaleDateString()}</span>
+                                        <div className="text-xs text-gray-400 text-right md:w-32 flex-shrink-0 font-mono">
+                                            最後錯誤:<br/>{new Date(log.lastMissed).toLocaleDateString()}
                                         </div>
                                     </div>
                                 ); 
                             })}
                         </div>
                     )}
+                    
+                    {mistakes.length > 0 && (
+                        <div className="text-center mt-12 pb-10">
+                            <button onClick={() => {if(confirm('確定清空錯題本？這將移除所有錯誤紀錄。')) { setMistakeLog([]); } }} className="text-gray-400 hover:text-gray-600 text-sm hover:bg-gray-100/80 px-4 py-2 rounded-lg transition-colors">
+                                清空錯題本
+                            </button>
+                        </div>
+                    )}
                 </div>
             );
         };
 
-        // App Component (Updates)
         const App = () => {
             const parsedData = useMemo(() => ({ "精選成語": IDIOM_DATA }), []);
             const allItems = IDIOM_DATA;
-            // ... (keep existing state declarations)
+            const categories = ["精選成語"];
+
             const [currentMode, setCurrentMode] = useState('menu'); 
             const [activeCategory, setActiveCategory] = useState(null);
             const [showNameWarning, setShowNameWarning] = useState(false);
@@ -901,7 +1200,7 @@
             const [isLocked, setIsLocked] = useState(false);
             
             // Firebase States
-            const [connectionStatus, setConnectionStatus] = useState('loading'); 
+            const [connectionStatus, setConnectionStatus] = useState('loading'); // loading, success, error
             const [isFirebaseReady, setIsFirebaseReady] = useState(false);
             const [globalUsers, setGlobalUsers] = useState([]);
             
@@ -911,6 +1210,7 @@
             const [mistakeLog, setMistakeLog] = useState([]);
             const [completedDays, setCompletedDays] = useState([]);
             
+            // Save Session State
             const [savedSession, setSavedSession] = useState(null);
 
             const [learnPage, setLearnPage] = useState(0);
@@ -919,48 +1219,77 @@
             const [quizScore, setQuizScore] = useState(0);
             const [combo, setCombo] = useState(0);
             const [quizPage, setQuizPage] = useState(0);
-            const [lastUser, setLastUser] = useState(null);
+            const [lastUser, setLastUser] = useState(null); // Keep for compatibility but data comes from global list
 
+            // 背景圖狀態
             const [bgImage, setBgImage] = useState('');
-            const musicPlayerRef = useRef(null);
 
-            // ... (keep existing useEffects and handlers: fetchMusic, initAuth, user listener, etc.)
-            
+            // 音樂播放器 Ref
+            const musicPlayerRef = useRef(null);
             const triggerMusic = () => {
                 if(musicPlayerRef.current) {
                     musicPlayerRef.current.triggerPlay();
                 }
             };
 
+            // 初始化背景圖
             useEffect(() => {
                 const randomNum = Math.floor(Math.random() * 5) + 1;
                 setBgImage(`images/san${randomNum}.jpg`);
             }, []);
 
-            // Firebase Logic (Same as before - simplified for brevity in this display, keeping logic intact)
+            // ==========================================
+            //  Firebase 邏輯
+            // ==========================================
+
+            // 1. 初始化 & 匿名登入 & 監聽全域使用者
             useEffect(() => {
-                if (!isFirebaseInitialized) { setConnectionStatus('error'); return; }
+                if (!isFirebaseInitialized) {
+                    setConnectionStatus('error');
+                    return;
+                }
+
                 const initAuth = async () => {
                     try {
                         setConnectionStatus('loading');
                         await signInAnonymously(auth);
                         setIsFirebaseReady(true);
                         setConnectionStatus('success');
+
+                        // 監聽 Global Users
                         const globalDocRef = doc(db, COLLECTION_NAME, DOC_GLOBAL);
                         const unsubscribeGlobal = onSnapshot(globalDocRef, (docSnap) => {
-                            if (docSnap.exists()) { setGlobalUsers(docSnap.data().users || []); } 
-                            else { setDoc(globalDocRef, { users: [] }, { merge: true }); }
-                        }, () => setConnectionStatus('error'));
+                            if (docSnap.exists()) {
+                                const data = docSnap.data();
+                                setGlobalUsers(data.users || []);
+                            } else {
+                                // 如果文件不存在，初始化它
+                                setDoc(globalDocRef, { users: [] }, { merge: true });
+                            }
+                        }, (error) => {
+                            console.error("Global listener error", error);
+                            setConnectionStatus('error');
+                        });
                         return unsubscribeGlobal;
-                    } catch (error) { setConnectionStatus('error'); setIsFirebaseReady(false); }
+
+                    } catch (error) {
+                        console.error("Auth error", error);
+                        setConnectionStatus('error');
+                        setIsFirebaseReady(false);
+                    }
                 };
+
                 const unsub = initAuth();
                 return () => { if(typeof unsub === 'function') unsub(); };
             }, []);
 
+            // 2. 監聽當前使用者資料 (含 Saved Session)
             useEffect(() => {
                 if (!isFirebaseReady || !userName || !isLocked) return;
+
                 const userDocRef = doc(db, COLLECTION_NAME, userName);
+                
+                // 設置監聽器
                 const unsubscribeUser = onSnapshot(userDocRef, (docSnap) => {
                     if (docSnap.exists()) {
                         const data = docSnap.data();
@@ -968,55 +1297,127 @@
                         setHistoryLog(data.history || []);
                         setMistakeLog(data.mistakes || []);
                         setCompletedDays(data.progress || []);
-                        setSavedSession(data.currentQuizSession || null);
+                        setSavedSession(data.currentQuizSession || null); // 讀取儲存的作答進度
                         setConnectionStatus('success');
                     } else {
-                        setDoc(userDocRef, { favorites: [], history: [], mistakes: [], progress: [], lastLogin: new Date().toISOString() }, { merge: true });
+                        // 新使用者，初始化資料
+                        setDoc(userDocRef, {
+                            favorites: [],
+                            history: [],
+                            mistakes: [],
+                            progress: [],
+                            lastLogin: new Date().toISOString()
+                        }, { merge: true });
                     }
-                }, () => setConnectionStatus('error'));
+                }, (error) => {
+                    console.error("User data listener error", error);
+                    setConnectionStatus('error');
+                });
+
                 return () => unsubscribeUser();
             }, [isFirebaseReady, userName, isLocked]);
 
+            // 3. 資料儲存 Helper (更新特定欄位)
             const updateUserData = async (field, value) => {
                 if (!isFirebaseReady || !userName || !isLocked) return;
                 try {
                     const userDocRef = doc(db, COLLECTION_NAME, userName);
-                    await updateDoc(userDocRef, { [field]: value, lastUpdate: new Date().toISOString() });
-                } catch (error) { console.error(`Error updating ${field}:`, error); setConnectionStatus('error'); }
+                    await updateDoc(userDocRef, {
+                        [field]: value,
+                        lastUpdate: new Date().toISOString()
+                    });
+                } catch (error) {
+                    console.error(`Error updating ${field}:`, error);
+                    setConnectionStatus('error');
+                }
             };
 
-            // ... (Login/Logout/Delete handlers - same as before)
+            // Login Handlers
             const handleLogin = async () => {
                 if (userName.trim()) {
-                    setIsLocked(true); setShowNameWarning(false);
+                    setIsLocked(true);
+                    setShowNameWarning(false);
+                    // 更新 Global Users 列表
                     if (isFirebaseReady) {
-                        try { const globalDocRef = doc(db, COLLECTION_NAME, DOC_GLOBAL); await updateDoc(globalDocRef, { users: arrayUnion(userName) }); } catch (e) {}
+                        try {
+                            const globalDocRef = doc(db, COLLECTION_NAME, DOC_GLOBAL);
+                            await updateDoc(globalDocRef, {
+                                users: arrayUnion(userName)
+                            });
+                        } catch (e) { console.error("Error adding user to global list", e); }
                     }
-                } else { setShowNameWarning(true); }
+                } else {
+                    setShowNameWarning(true);
+                }
             };
-            const handleQuickLogin = (name) => { setUserName(name); setIsLocked(true); setShowNameWarning(false); };
-            const handleLogout = () => { if(confirm('確定要登出嗎？')) { setIsLocked(false); setUserName(''); setFavorites([]); setHistoryLog([]); setMistakeLog([]); setCompletedDays([]); setSavedSession(null); } };
-            const handleDeleteUser = async () => { /* Same as before */ 
+
+            const handleQuickLogin = (name) => {
+                setUserName(name);
+                setIsLocked(true);
+                setShowNameWarning(false);
+            };
+
+            const handleLogout = () => {
+                if(confirm('確定要登出嗎？')) {
+                    setIsLocked(false);
+                    setUserName('');
+                    setFavorites([]);
+                    setHistoryLog([]);
+                    setMistakeLog([]);
+                    setCompletedDays([]);
+                    setSavedSession(null);
+                }
+            };
+
+            const handleDeleteUser = async () => {
                 if (!isFirebaseReady) { alert("請先連線至雲端"); return; }
                 if (confirm('【危險操作】確定要刪除這位使用者的所有資料嗎？')) {
                     if (confirm('再次確認：這將會清除所有學習紀錄、收藏和錯題本，且無法復原！確定要執行嗎？')) {
                         try {
+                            // 1. 移除 Global List
                             const globalDocRef = doc(db, COLLECTION_NAME, DOC_GLOBAL);
-                            await updateDoc(globalDocRef, { users: arrayRemove(userName) });
+                            await updateDoc(globalDocRef, {
+                                users: arrayRemove(userName)
+                            });
+                            
+                            // 2. 標記刪除
                             const userDocRef = doc(db, COLLECTION_NAME, userName);
                             await setDoc(userDocRef, { deleted: true });
-                            setFavorites([]); setHistoryLog([]); setMistakeLog([]); setCompletedDays([]); setSavedSession(null); setIsLocked(false); setUserName('');
-                        } catch (e) { alert("刪除失敗"); }
+
+                            setFavorites([]);
+                            setHistoryLog([]);
+                            setMistakeLog([]);
+                            setCompletedDays([]);
+                            setSavedSession(null);
+                            setIsLocked(false);
+                            setUserName('');
+                        } catch (e) {
+                            console.error("Delete failed", e);
+                            alert("刪除失敗，請檢查網路連線");
+                        }
                     }
                 }
             };
 
-            const toggleFavorite = (id) => { const newFavorites = favorites.includes(id) ? favorites.filter(fid => fid !== id) : [...favorites, id]; setFavorites(newFavorites); updateUserData('favorites', newFavorites); };
-            const clearHistoryLog = () => { setHistoryLog([]); updateUserData('history', []); };
-            const clearMistakeLog = () => { setMistakeLog([]); updateUserData('mistakes', []); };
+            // Data Modification Wrappers
+            const toggleFavorite = (id) => { 
+                const newFavorites = favorites.includes(id) ? favorites.filter(fid => fid !== id) : [...favorites, id];
+                setFavorites(newFavorites); 
+                updateUserData('favorites', newFavorites);
+            };
 
-            // ... (Audio, Quiz Start, Answer, Finish handlers - same as before)
-            const playSoundEffect = (type) => { /* Same as before */ 
+            const clearHistoryLog = () => {
+                setHistoryLog([]);
+                updateUserData('history', []);
+            };
+
+            const clearMistakeLog = () => {
+                setMistakeLog([]);
+                updateUserData('mistakes', []);
+            }
+            
+            // Sound Effects
+            const playSoundEffect = (type) => {
                  try {
                     const AudioContext = window.AudioContext || window.webkitAudioContext;
                     if (!AudioContext) return;
@@ -1031,33 +1432,60 @@
                         const osc = ctx.createOscillator(); const gain = ctx.createGain();
                         osc.type = 'triangle'; osc.frequency.setValueAtTime(150, now); osc.frequency.exponentialRampToValueAtTime(50, now + 0.3); gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3); osc.connect(gain); gain.connect(ctx.destination); osc.start(now); osc.stop(now + 0.3);
                     }
-                } catch (e) {}
+                } catch (e) { console.error("Audio play failed", e); }
             };
 
             const handleStartQuiz = (category, pageIdx = 0, isMistakeMode = false) => {
                 if (!isLocked) { setShowNameWarning(true); return; }
-                if (savedSession && savedSession.category === category && savedSession.pageIdx === pageIdx && !isMistakeMode) {
+
+                // --- 檢查是否有未完成的進度 ---
+                if (savedSession && 
+                    savedSession.category === category && 
+                    savedSession.pageIdx === pageIdx && 
+                    !isMistakeMode // 錯題本模式暫不支援接續，因為內容隨機
+                ) {
                     if (confirm('發現您有未完成的進度，是否繼續作答？')) {
-                        setQuizQuestions(savedSession.questions); setQuizScore(savedSession.score); setCombo(savedSession.combo); setQuizPage(savedSession.pageIdx); setActiveCategory(savedSession.category); setCurrentMode('quiz'); return;
-                    } else { updateUserData('currentQuizSession', null); }
+                        setQuizQuestions(savedSession.questions);
+                        setQuizScore(savedSession.score);
+                        setCombo(savedSession.combo);
+                        setQuizPage(savedSession.pageIdx);
+                        setActiveCategory(savedSession.category);
+                        setCurrentMode('quiz');
+                        return; // 直接返回，不產生新題目
+                    } else {
+                        // 如果選擇不繼續，則清除舊紀錄
+                        updateUserData('currentQuizSession', null);
+                    }
+                } else if (savedSession && !isMistakeMode) {
+                    // 如果有其他關卡的進度
+                    // 這裡可以選擇提示使用者，或者默默覆蓋。為了體驗流暢，選擇直接開始新遊戲（這會導致舊進度在第一次作答時被覆蓋）
                 }
-                
+
                 let questions = [];
+                
                 if (isMistakeMode) {
                     const mistakeIds = mistakeLog.map(m => m.id);
                     questions = allItems.filter(i => mistakeIds.includes(i.id));
                     questions.sort(() => Math.random() - 0.5);
                 } else {
                     let sourceItems = category === '收藏夾' ? allItems.filter(i => favorites.includes(i.id)) : parsedData["精選成語"];
-                    if (!sourceItems || sourceItems.length === 0) { alert("此分類尚無內容！"); return; }
+                    if (!sourceItems || sourceItems.length === 0) {
+                         alert("此分類尚無內容，請先進行收藏或選擇其他分類！");
+                         return;
+                    }
                     const start = pageIdx * ITEMS_PER_PAGE;
                     if (start >= sourceItems.length && pageIdx > 0) {
-                         handleStartQuiz(category, Math.floor((sourceItems.length - 1) / ITEMS_PER_PAGE), isMistakeMode); return;
+                         const correctPage = Math.floor((sourceItems.length - 1) / ITEMS_PER_PAGE);
+                         handleStartQuiz(category, correctPage, isMistakeMode);
+                         return;
                     }
                     questions = sourceItems.slice(start, start + ITEMS_PER_PAGE);
                 }
 
-                if (questions.length === 0) { alert(isMistakeMode ? "目前沒有錯題！" : "此頁面無題目"); return; }
+                if (questions.length === 0) {
+                    alert(isMistakeMode ? "太棒了！目前沒有錯題需要複習！" : "此頁面無題目");
+                    return;
+                }
 
                 const quizSet = questions.map(item => {
                     let pool = allItems.filter(i => i.id !== item.id);
@@ -1066,51 +1494,119 @@
                     return { ...item, options, userAnswer: null, isCorrect: null };
                 });
 
-                setQuizQuestions(quizSet); setQuizScore(0); setCombo(0); setQuizPage(pageIdx); setActiveCategory(isMistakeMode ? '錯題本' : category); setCurrentMode('quiz'); window.scrollTo(0,0);
+                setQuizQuestions(quizSet);
+                setQuizScore(0);
+                setCombo(0);
+                setQuizPage(pageIdx);
+                setActiveCategory(isMistakeMode ? '錯題本' : category);
+                setCurrentMode('quiz');
+                window.scrollTo(0,0);
             };
 
             const handleAnswer = (qIndex, selectedOptionId) => {
-                const newQuestions = [...quizQuestions]; const q = newQuestions[qIndex];
+                const newQuestions = [...quizQuestions];
+                const q = newQuestions[qIndex];
                 if (q.userAnswer !== null) return; 
-                const isCorrect = selectedOptionId === q.id; q.userAnswer = selectedOptionId; q.isCorrect = isCorrect;
+
+                const isCorrect = selectedOptionId === q.id;
+                q.userAnswer = selectedOptionId;
+                q.isCorrect = isCorrect;
                 
-                let newScore = quizScore; let newCombo = combo;
+                let newScore = quizScore;
+                let newCombo = combo;
+
                 if (isCorrect) {
-                    newScore++; newCombo++; setQuizScore(newScore); setCombo(newCombo); playSoundEffect('correct');
-                    if (newCombo > 0 && (newCombo + 1) % 5 === 0) confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+                    newScore = quizScore + 1;
+                    newCombo = combo + 1;
+                    setQuizScore(newScore);
+                    setCombo(newCombo);
+                    playSoundEffect('correct');
+                    if (newCombo > 0 && (newCombo + 1) % 5 === 0) {
+                         confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+                    } else {
+                         confetti({ particleCount: 30, spread: 50, origin: { y: 0.7 }, scalar: 0.7 });
+                    }
                 } else {
-                    newCombo = 0; setCombo(0); playSoundEffect('wrong');
+                    newCombo = 0;
+                    setCombo(0);
+                    playSoundEffect('wrong');
+                    
                     const newMistakeLog = [...mistakeLog];
                     const existingIndex = newMistakeLog.findIndex(m => m.id === q.id);
-                    if (existingIndex > -1) { newMistakeLog[existingIndex] = { ...newMistakeLog[existingIndex], count: newMistakeLog[existingIndex].count + 1, lastMissed: new Date().toISOString() }; } 
-                    else { newMistakeLog.push({ id: q.id, count: 1, lastMissed: new Date().toISOString() }); }
-                    setMistakeLog(newMistakeLog); updateUserData('mistakes', newMistakeLog);
+                    if (existingIndex > -1) {
+                        newMistakeLog[existingIndex] = { ...newMistakeLog[existingIndex], count: newMistakeLog[existingIndex].count + 1, lastMissed: new Date().toISOString() };
+                    } else {
+                        newMistakeLog.push({ id: q.id, count: 1, lastMissed: new Date().toISOString() });
+                    }
+                    setMistakeLog(newMistakeLog);
+                    updateUserData('mistakes', newMistakeLog);
                 }
                 setQuizQuestions(newQuestions);
-                if (activeCategory !== '錯題本') {
-                    updateUserData('currentQuizSession', { questions: newQuestions, score: newScore, combo: newCombo, category: activeCategory, pageIdx: quizPage, timestamp: new Date().toISOString() });
+
+                // --- 儲存當前作答進度 ---
+                if (activeCategory !== '錯題本') { // 錯題本隨機生成，暫不支援儲存
+                    updateUserData('currentQuizSession', {
+                        questions: newQuestions,
+                        score: newScore,
+                        combo: newCombo,
+                        category: activeCategory,
+                        pageIdx: quizPage,
+                        timestamp: new Date().toISOString()
+                    });
                 }
             };
 
             const finishQuiz = () => {
-                const record = { id: Date.now(), date: new Date().toLocaleString(), userName, score: quizScore, total: quizQuestions.length, category: activeCategory, details: quizQuestions.map(q => ({ term: q.term, definition: q.definition, sentence: q.sentence2, isCorrect: q.isCorrect, userAnswer: q.options.find(o => o.id === q.userAnswer)?.term || "未作答", correctAnswer: q.term })) };
-                const newHistory = [record, ...historyLog]; setHistoryLog(newHistory); updateUserData('history', newHistory);
+                const record = { 
+                    id: Date.now(), 
+                    date: new Date().toLocaleString(), 
+                    userName, 
+                    score: quizScore, 
+                    total: quizQuestions.length, 
+                    category: activeCategory, 
+                    details: quizQuestions.map(q => ({ 
+                        term: q.term, 
+                        definition: q.definition, 
+                        sentence: q.sentence2, 
+                        isCorrect: q.isCorrect, 
+                        userAnswer: q.options.find(o => o.id === q.userAnswer)?.term || "未作答", 
+                        correctAnswer: q.term 
+                    })) 
+                };
+                
+                const newHistory = [record, ...historyLog];
+                setHistoryLog(newHistory);
+                updateUserData('history', newHistory);
+
                 if (activeCategory !== '收藏夾' && activeCategory !== '錯題本') { 
                     const key = `${activeCategory}-${quizPage}`; 
-                    if (!completedDays.includes(key) && quizScore > 0) { const newCompleted = [...completedDays, key]; setCompletedDays(newCompleted); updateUserData('progress', newCompleted); } 
+                    if (!completedDays.includes(key) && quizScore > 0) { 
+                        const newCompleted = [...completedDays, key];
+                        setCompletedDays(newCompleted); 
+                        updateUserData('progress', newCompleted);
+                    } 
                 }
+
+                // --- 關卡完成，清除作答進度 ---
                 updateUserData('currentQuizSession', null);
             };
 
             return (
                 <div className="min-h-screen font-sans selection:bg-amber-200 selection:text-amber-900 relative">
                     {/* Background Layer */}
-                    <div className="fixed inset-0 z-0 bg-cover bg-center transition-all duration-1000 no-print" style={{ backgroundImage: `url('${bgImage}')`, backgroundColor: '#fcf9f2' }}></div>
-                    <div className="fixed inset-0 z-0 bg-white/70 backdrop-blur-[2px] no-print"></div>
+                    <div 
+                        className="fixed inset-0 z-0 bg-cover bg-center transition-all duration-1000"
+                        style={{ 
+                            backgroundImage: `url('${bgImage}')`,
+                            backgroundColor: '#fcf9f2' 
+                        }}
+                    ></div>
+                    {/* Overlay for Readability */}
+                    <div className="fixed inset-0 z-0 bg-white/70 backdrop-blur-[2px]"></div>
 
                     {/* Main Content Area */}
                     <div className="relative z-10">
-                        {/* Music Player (No Print) */}
+                        {/* Music Player */}
                         <MusicPlayer ref={musicPlayerRef} />
 
                         {currentMode === 'menu' && (
@@ -1122,13 +1618,11 @@
                                 onViewHistory={() => setCurrentMode('history')}
                                 onViewMistakes={() => setCurrentMode('mistakes')}
                                 onViewTable={() => setCurrentMode('table')}
-                                onPrint={() => setCurrentMode('print')}
                                 onLogin={handleLogin} isLocked={isLocked} onQuickLogin={handleQuickLogin} lastUser={lastUser}
                                 onLogout={handleLogout} onDeleteUser={handleDeleteUser}
                                 globalUsers={globalUsers}
                                 triggerMusic={triggerMusic}
                                 connectionStatus={connectionStatus}
-                                completedDays={completedDays}
                             />
                         )}
                         {currentMode === 'learn' && (
@@ -1176,12 +1670,6 @@
                                 onMenu={() => setCurrentMode('menu')} 
                                 favorites={favorites}
                                 toggleFavorite={toggleFavorite}
-                            />
-                        )}
-                        {currentMode === 'print' && (
-                            <PrintView 
-                                items={allItems}
-                                onMenu={() => setCurrentMode('menu')}
                             />
                         )}
                     </div>
