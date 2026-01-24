@@ -967,32 +967,6 @@
                                     </div>
                                 </div>
                                 <div className="p-6 bg-gray-50/50"><div className="grid grid-cols-1 md:grid-cols-2 gap-4">{q.options.map(opt => { let btnClass = "p-5 rounded-2xl border-2 text-left font-bold text-xl transition-all relative overflow-hidden "; if (q.userAnswer === null) btnClass += "bg-white border-gray-200 hover:border-amber-400 hover:shadow-md cursor-pointer active:scale-[0.98] text-gray-700"; else { if (opt.id === q.id) btnClass += "bg-green-100 border-green-500 text-green-800 ring-2 ring-green-200 shadow-md"; else if (opt.id === q.userAnswer) btnClass += "bg-red-100 border-red-500 text-red-800 opacity-80"; else btnClass += "bg-gray-50 border-gray-200 text-gray-300 opacity-40 grayscale"; } return (<button key={opt.id} onClick={() => onAnswer(idx, opt.id)} disabled={q.userAnswer !== null} className={btnClass}>{opt.term}{q.userAnswer !== null && opt.id === q.id && <div className="absolute right-4 top-1/2 -translate-y-1/2 text-green-600 bg-white rounded-full p-1"><Icon path={icons.check} className="w-5 h-5"/></div>}</button>)})}</div></div>
-                                
-                                {q.userAnswer !== null && !q.isCorrect && (
-                                    <div className="p-6 bg-red-50/50 border-t border-red-100 animate-fade-in-up">
-                                        <div className="bg-white rounded-xl p-5 border border-red-200 flex flex-col md:flex-row gap-5 items-start shadow-sm">
-                                            <div className="w-full md:w-40 aspect-video rounded-lg overflow-hidden border border-gray-200 bg-gray-100 flex-shrink-0">
-                                                <img 
-                                                    src={`images/p${String(q.id).padStart(3, '0')}.jpg`}
-                                                    className="w-full h-full object-cover" 
-                                                    onError={(e) => {
-                                                        e.target.onerror = null; 
-                                                        e.target.parentNode.innerHTML = `<div class="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400 text-xs p-2 text-center">${q.scene || '無圖片'}</div>`;
-                                                    }}
-                                                />
-                                            </div>
-                                            <div className="flex-1">
-                                                <div className="text-sm font-black text-red-800 mb-1 flex items-center gap-2 uppercase tracking-wide">
-                                                    <Icon path={icons.book} className="w-4 h-4"/> 成語釋義
-                                                </div>
-                                                <div className="flex items-center gap-2 mb-2">
-                                                    <div className="text-2xl font-black text-gray-900">{q.term}</div>
-                                                </div>
-                                                <div className="text-gray-700 text-base leading-relaxed">{q.definition}</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
                             </div>
                         ))}
                     </div>
