@@ -182,7 +182,6 @@
   appId: "1:76289812052:web:898384a916f9f341f62fc1"
 };
 
-
         // Firebase Initialization
         let db;
         let auth;
@@ -383,7 +382,7 @@
             { id: 172, term: "傷春悲秋", definition: "因季節景物變化而感傷。形容多愁善感。", sentence1: "她總是傷春悲秋，一點小事就掉眼淚。", sentence2: "與其整天傷春悲秋，不如振作起來做點有意義的事。", scene: "感嘆季節，情緒低落多愁。" },
             { id: 173, term: "如影隨形", definition: "好像影子跟在身體後面一樣。比喻常在一起，或關係密切。", sentence1: "這些煩惱如影隨形，讓他無法安心工作。", sentence2: "孤獨感就像如影隨形般，時刻伴隨著他。", scene: "像影子跟著身體，分不開。" },
             { id: 174, term: "一帆風順", definition: "船掛滿帆，順風行駛。比喻事情非常順利，沒有阻礙。", sentence1: "祝你未來的事業一帆風順，鵬程萬里。", sentence2: "人生不可能永遠一帆風順，總會遇到一些挫折。", scene: "旅程或事情非常順利。" }
-       ];
+        ];
 
         // 自動生成測試資料 (修正版：確保 ID 不重複)
         if (IDIOM_DATA.length < 50) {
@@ -716,57 +715,52 @@
 
                         {/* Right Column: Main Content */}
                         <div className="lg:col-span-9 space-y-6">
-                            {/* 修煉進度地圖 (Added scrollbar logic here) */}
+                            {/* 修煉進度地圖 */}
                             <div className="bg-white/90 backdrop-blur rounded-2xl p-6 shadow-md border-2 border-blue-100">
                                 <h3 className="text-2xl font-black text-blue-900 mb-6 flex items-center">
                                     🗺️ 修煉進度地圖 <span className="ml-3 text-sm font-bold text-blue-500 bg-blue-50 px-2 py-1 rounded-lg">共 {totalPages} 關</span>
                                 </h3>
-                                {/* Added max-height and overflow-y-auto for scrollbar */}
-                                <div className="max-h-96 overflow-y-auto pr-2 custom-scrollbar">
-                                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                                        {Array.from({ length: totalPages }).map((_, i) => {
-                                            const status = getLevelStatus(i);
-                                            return (
-                                                <button 
-                                                    key={i}
-                                                    onClick={() => { onStartQuiz('精選成語', i); triggerMusic(); }}
-                                                    className={`relative p-4 rounded-xl border-2 flex flex-col items-center justify-center gap-2 transition-all h-32 group
-                                                        ${status.completed 
-                                                            ? 'bg-green-50 border-green-200 hover:border-green-400' 
-                                                            : 'bg-white border-gray-200 hover:border-amber-400 hover:shadow-md'
-                                                        }`}
-                                                >
-                                                    <div className={`text-lg font-black ${status.completed ? 'text-green-700' : 'text-gray-600'}`}>
-                                                        卷 {i + 1}
+                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                                    {Array.from({ length: totalPages }).map((_, i) => {
+                                        const status = getLevelStatus(i);
+                                        return (
+                                            <button 
+                                                key={i}
+                                                onClick={() => { onStartQuiz('精選成語', i); triggerMusic(); }}
+                                                className={`relative p-4 rounded-xl border-2 flex flex-col items-center justify-center gap-2 transition-all h-32 group
+                                                    ${status.completed 
+                                                        ? 'bg-green-50 border-green-200 hover:border-green-400' 
+                                                        : 'bg-white border-gray-200 hover:border-amber-400 hover:shadow-md'
+                                                    }`}
+                                            >
+                                                <div className={`text-lg font-black ${status.completed ? 'text-green-700' : 'text-gray-600'}`}>
+                                                    卷 {i + 1}
+                                                </div>
+                                                {status.completed ? (
+                                                    <div className="flex flex-col items-center">
+                                                        <div className="bg-green-100 text-green-600 p-1 rounded-full mb-1">
+                                                            <Icon path={icons.check} className="w-6 h-6"/>
+                                                        </div>
+                                                        <span className="text-[10px] font-mono text-green-600 font-bold bg-green-100/50 px-1 rounded">{status.date}</span>
                                                     </div>
-                                                    {status.completed ? (
-                                                        <div className="flex flex-col items-center">
-                                                            <div className="bg-green-100 text-green-600 p-1 rounded-full mb-1">
-                                                                <Icon path={icons.check} className="w-6 h-6"/>
-                                                            </div>
-                                                            {/* Modified: Increased font size to text-sm and adjusted padding */}
-                                                            <span className="text-sm font-mono text-green-600 font-bold bg-green-100/50 px-2 py-0.5 rounded">{status.date}</span>
-                                                        </div>
-                                                    ) : (
-                                                        <div className="text-gray-300 group-hover:text-amber-400 transition-colors">
-                                                            <Icon path={icons.lock} className="w-8 h-8"/>
-                                                        </div>
-                                                    )}
-                                                    {!status.completed && (
-                                                        <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl flex items-center justify-center">
-                                                            <span className="bg-white px-3 py-1 rounded-full text-xs font-bold text-amber-600 shadow-sm">挑戰</span>
-                                                        </div>
-                                                    )}
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
+                                                ) : (
+                                                    <div className="text-gray-300 group-hover:text-amber-400 transition-colors">
+                                                        <Icon path={icons.lock} className="w-8 h-8"/>
+                                                    </div>
+                                                )}
+                                                {!status.completed && (
+                                                    <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl flex items-center justify-center">
+                                                        <span className="bg-white px-3 py-1 rounded-full text-xs font-bold text-amber-600 shadow-sm">挑戰</span>
+                                                    </div>
+                                                )}
+                                            </button>
+                                        );
+                                    })}
                                 </div>
                             </div>
 
-                            {/* Main Cards (Learning & My Favorites) */}
+                            {/* Main Cards (Learning & Quiz) */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                {/* 學習模式 */}
                                 <div className="bg-white/90 backdrop-blur rounded-2xl p-6 shadow-md border-2 border-amber-100 hover:border-amber-300 transition-all group relative overflow-hidden cursor-pointer" onClick={() => { onStartLearn('精選成語'); triggerMusic(); }}>
                                     <div className="absolute -right-6 -top-6 w-24 h-24 bg-amber-100 rounded-full opacity-50 group-hover:scale-150 transition-transform duration-500"></div>
                                     <h3 className="text-2xl font-black text-amber-900 mb-2 relative z-10">📖 研讀成語</h3>
@@ -778,26 +772,19 @@
                                     </div>
                                 </div>
 
-                                {/* 我的收藏 (Moved from bottom) */}
-                                <div className="bg-white/90 backdrop-blur rounded-2xl p-6 shadow-md border-2 border-rose-100 hover:border-rose-300 transition-all group relative overflow-hidden">
-                                    <div className="absolute -right-6 -top-6 w-24 h-24 bg-rose-100 rounded-full opacity-50 group-hover:scale-150 transition-transform duration-500"></div>
-                                    <div className="flex justify-between items-start relative z-10 mb-2">
-                                        <h3 className="text-2xl font-black text-rose-900 flex items-center"><Icon path={icons.heart} className="w-6 h-6 mr-2 text-rose-500" fill="currentColor"/> 我的收藏</h3>
-                                        <span className="bg-rose-100 text-rose-600 text-xs font-bold px-2 py-1 rounded-full">{favorites.length}</span>
-                                    </div>
-                                    <p className="text-gray-500 mb-6 relative z-10 h-12">複習您收藏的重點成語，隨時溫故知新。</p>
+                                <div className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl p-6 shadow-lg text-white hover:shadow-xl transition-all group relative overflow-hidden transform hover:-translate-y-1 cursor-pointer" onClick={() => { onStartQuiz('精選成語'); triggerMusic(); }}>
+                                    <div className="absolute -right-6 -bottom-6 w-32 h-32 bg-white/20 rounded-full opacity-50 group-hover:scale-150 transition-transform duration-500"></div>
+                                    <h3 className="text-2xl font-black mb-2 relative z-10">⚔️ 成語挑戰</h3>
+                                    <p className="text-amber-100 mb-6 relative z-10 h-12">隨機出題，測試你的成語實力，累積戰功！</p>
                                     <div className="flex gap-3 relative z-10">
-                                        <button onClick={() => { onStartLearn('收藏夾'); triggerMusic(); }} disabled={favorites.length===0} className="flex-1 bg-rose-50 hover:bg-rose-100 text-rose-700 py-3 rounded-xl font-bold transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed">
-                                            <Icon path={icons.book} className="w-5 h-5 mr-2"/> 溫故
-                                        </button>
-                                        <button onClick={() => { onStartQuiz('收藏夾'); triggerMusic(); }} disabled={favorites.length===0} className="flex-1 bg-rose-500 hover:bg-rose-600 text-white py-3 rounded-xl font-bold shadow-md transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed">
-                                            <Icon path={icons.play} className="w-5 h-5 mr-2"/> 知新
+                                        <button className="flex-1 bg-white text-amber-600 hover:bg-amber-50 py-3 rounded-xl font-bold shadow-md transition-colors flex items-center justify-center">
+                                            <Icon path={icons.play} className="w-5 h-5 mr-2"/> 開始挑戰
                                         </button>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Secondary Actions Grid */}
+                            {/* Secondary Actions Grid - 加入成語總覽 */}
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                 <button onClick={onViewTable} className="bg-white/80 hover:bg-purple-50 border-2 border-purple-100 hover:border-purple-300 p-4 rounded-2xl shadow-sm flex flex-col items-center justify-center gap-2 transition-all group">
                                     <div className="bg-purple-100 text-purple-500 p-3 rounded-full mb-1 shadow-sm group-hover:scale-110 transition-transform"><Icon path={icons.list} className="w-6 h-6"/></div>
@@ -819,6 +806,21 @@
                                     <div className="bg-gray-100 text-gray-600 p-3 rounded-full mb-1"><Icon path={icons.print} className="w-6 h-6"/></div>
                                     <span className="font-bold text-gray-700">列印考卷</span>
                                 </button>
+                            </div>
+
+                            {/* 收藏夾捷徑 - 保留此功能 */}
+                            <div className="bg-gradient-to-r from-pink-50 to-rose-50 rounded-2xl p-4 border border-rose-100 flex items-center justify-between shadow-sm">
+                                <div className="flex items-center gap-4">
+                                    <div className="bg-white p-3 rounded-xl shadow-sm text-rose-500"><Icon path={icons.heart} className="w-6 h-6" fill="currentColor"/></div>
+                                    <div>
+                                        <h4 className="font-black text-gray-800">我的收藏</h4>
+                                        <p className="text-xs text-gray-500">已收藏 {favorites.length} 個成語</p>
+                                    </div>
+                                </div>
+                                <div className="flex gap-2">
+                                    <button onClick={() => { onStartLearn('收藏夾'); triggerMusic(); }} disabled={favorites.length===0} className="px-4 py-2 bg-white text-rose-600 rounded-lg text-sm font-bold shadow-sm hover:shadow disabled:opacity-50">溫故</button>
+                                    <button onClick={() => { onStartQuiz('收藏夾'); triggerMusic(); }} disabled={favorites.length===0} className="px-4 py-2 bg-rose-500 text-white rounded-lg text-sm font-bold shadow-sm hover:bg-rose-600 disabled:opacity-50">知新</button>
+                                </div>
                             </div>
                         </div>
                     </div>
