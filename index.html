@@ -610,14 +610,20 @@
                         <div>
                             <h1 className="text-4xl md:text-5xl font-extrabold text-amber-900 tracking-tight flex items-center gap-3 font-serif drop-shadow-sm mb-2">
                                 <span className="text-5xl md:text-6xl filter drop-shadow-md">📜</span> 
-<div className="text-center my-8">
+<div className="flex items-center justify-center my-8 px-6">
   {/* 主標題 */}
-  <h1 className="text-4xl md:text-6xl font-extrabold bg-gradient-to-r from-pink-500 via-amber-500 to-red-600 bg-clip-text text-transparent drop-shadow-lg animate-pulse">
+  <h1 className="text-3xl md:text-5xl font-extrabold bg-gradient-to-r from-pink-500 via-amber-500 to-red-600 bg-clip-text text-transparent drop-shadow-lg animate-pulse pr-4">
     成語大師
   </h1>
 
+  {/* 分隔線 + 小圖示 */}
+  <div className="flex items-center mx-4">
+    <div className="h-8 w-px bg-amber-400"></div>
+    <span className="ml-2 text-amber-500 text-xl animate-bounce">✨</span>
+  </div>
+
   {/* 副標題 */}
-  <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-amber-100 border border-amber-400 rounded-full shadow-md">
+  <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-100 border border-amber-400 rounded-full shadow-md hover:scale-105 transition-transform duration-300">
     <span className="text-sm md:text-lg font-semibold text-amber-700">
       📘 第3冊 - L8 尋找失落的水源
     </span>
