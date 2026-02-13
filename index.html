@@ -616,10 +616,15 @@
     成語大師
   </h1>
 
-  {/* 分隔線 + 小圖示 */}
-  <div className="flex items-center mx-4">
-    <div className="h-8 w-px bg-amber-400"></div>
-    <span className="ml-2 text-amber-500 text-xl animate-bounce">✨</span>
+  {/* 分隔線 + 星雨效果 */}
+  <div className="relative mx-6 flex items-center justify-center">
+    {/* 漸層光束 */}
+    <div className="h-1 w-28 bg-gradient-to-r from-pink-400 via-amber-300 to-red-400 rounded-full shadow-lg"></div>
+
+    {/* 多顆流星依序劃過 */}
+    <span className="absolute left-0 text-xl text-amber-500 animate-[meteor1_2s_linear_infinite]">💫</span>
+    <span className="absolute left-0 text-xl text-pink-400 animate-[meteor2_3s_linear_infinite]">🌟</span>
+    <span className="absolute left-0 text-xl text-red-500 animate-[meteor3_4s_linear_infinite]">✨</span>
   </div>
 
   {/* 副標題 */}
@@ -628,8 +633,7 @@
       📘 第3冊 - L8 尋找失落的水源
     </span>
   </div>
-</div>
-                            </h1>
+</div>                            </h1>
                             <p className="text-gray-500 font-bold ml-2">互動式學習系統 v2.0</p>
                         </div>
                         
