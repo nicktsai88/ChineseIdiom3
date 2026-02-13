@@ -616,15 +616,10 @@
     成語大師
   </h1>
 
-  {/* 分隔線 + 星雨效果 */}
-  <div className="relative mx-6 flex items-center justify-center">
-    {/* 漸層光束 */}
-    <div className="h-1 w-28 bg-gradient-to-r from-pink-400 via-amber-300 to-red-400 rounded-full shadow-lg"></div>
-
-    {/* 多顆流星依序劃過 */}
-    <span className="absolute left-0 text-xl text-amber-500 animate-[meteor1_2s_linear_infinite]">💫</span>
-    <span className="absolute left-0 text-xl text-pink-400 animate-[meteor2_3s_linear_infinite]">🌟</span>
-    <span className="absolute left-0 text-xl text-red-500 animate-[meteor3_4s_linear_infinite]">✨</span>
+  {/* 分隔線：漸層光束效果 */}
+  <div className="flex items-center mx-6">
+    <div className="h-1 w-24 bg-gradient-to-r from-pink-400 via-amber-300 to-red-400 animate-pulse rounded-full shadow-lg"></div>
+    <span className="ml-2 text-amber-500 text-xl animate-bounce">✨</span>
   </div>
 
   {/* 副標題 */}
